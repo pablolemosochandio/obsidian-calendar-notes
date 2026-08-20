@@ -1,0 +1,44 @@
+# openspec/config.yaml — SDD project config (bootstrapped by sdd-init, 2026-08-20)
+schema: spec-driven
+
+context: |
+  Plugin: notes-calendar (Obsidian community plugin, GPL-3.0-only, desktop + mobile/iPad).
+  Stack: TypeScript 5 + esbuild 0.28 (CJS, ES6 target) + ESLint 9 flat config + npm.
+  Repo: https://github.com/tcatlas/obsidian-notes-calendar
+  Architecture: src/main.ts entrypoint, src/views/calendar-view.ts monolithic UI (~900 lines),
+  src/settings.ts (settings + normalizers + formatDateTime), src/styles.css (calendar-* prefix).
+  Testing: no test runner installed; verification = eslint + tsc --noEmit + manual build.
+  Conventions: conventional commits; esbuild externals: obsidian, electron, @codemirror/*, @lezer/*.
+
+strict_tdd: false
+
+testing:
+  strict_tdd: false
+  test_runner: none
+  typecheck: "npx tsc --noEmit"
+  lint: "npm run lint"
+  build: "npm run production"
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    guidelines:
+      - Follow existing code patterns
+    tdd: false
+    test_command: ""
+  verify:
+    test_command: ""
+    build_command: "npm run production"
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas
