@@ -6,6 +6,8 @@ import {
 	DEFAULT_SETTINGS,
 	normalizeExcerptLines,
 	normalizeNoteSortBy,
+	normalizeNoteDateProperty,
+	normalizeNoteDatePropertyFormat,
 	normalizeSortOrder,
 	normalizeWeekNumberDisplay,
 	normalizeTimeDisplayFormat,
@@ -59,6 +61,8 @@ export default class CalendarPlugin extends Plugin {
 		this.settings.excerptLines = normalizeExcerptLines(this.settings.excerptLines ?? DEFAULT_SETTINGS.excerptLines);
 		this.settings.noteSortBy = normalizeNoteSortBy(this.settings.noteSortBy ?? '');
 		this.settings.noteSortOrder = normalizeSortOrder(this.settings.noteSortOrder ?? '');
+		this.settings.noteDateProperty = normalizeNoteDateProperty(this.settings.noteDateProperty ?? '');
+		this.settings.noteDatePropertyFormat = normalizeNoteDatePropertyFormat(this.settings.noteDatePropertyFormat ?? '');
 		this.settings.weekNumberDisplay = normalizeWeekNumberDisplay(this.settings.weekNumberDisplay ?? '');
 		normalizeWeekdayVisibility(this.settings);
 	}

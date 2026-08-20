@@ -4,7 +4,7 @@ import type CalendarPlugin from './main';
 export type TimeDisplayFormat = string;
 export type WeekStartDay = 'monday' | 'sunday';
 export type WeekNumberDisplay = 'off' | 'iso-8601' | 'united-states';
-export type NoteSortBy = 'name' | 'creation-time';
+export type NoteSortBy = 'name' | 'creation-time' | 'note-property';
 export type SortOrder = 'ascending' | 'descending';
 export type WeekdayVisibilityKey =
 	| 'showSunday'
@@ -37,6 +37,8 @@ export interface CalendarPluginSettings {
 	excerptLines: number;
 	noteSortBy: NoteSortBy;
 	noteSortOrder: SortOrder;
+	noteDateProperty: string;
+	noteDatePropertyFormat: string;
 	weekStartDay: WeekStartDay;
 	weekNumberDisplay: WeekNumberDisplay;
 	showSunday: boolean;
@@ -60,6 +62,8 @@ export const DEFAULT_SETTINGS: CalendarPluginSettings = {
 	excerptLines: 2,
 	noteSortBy: 'creation-time',
 	noteSortOrder: 'ascending',
+	noteDateProperty: '',
+	noteDatePropertyFormat: 'DD-MM-YYYY',
 	weekStartDay: 'sunday',
 	weekNumberDisplay: 'off',
 	showSunday: true,
@@ -96,7 +100,22 @@ export function normalizeExcerptLines(value: number): number {
 }
 
 export function normalizeNoteSortBy(value: string): NoteSortBy {
+	if (value === 'note-property') {
+		return 'note-property';
+	}
 	return value === 'creation-time' ? 'creation-time' : 'name';
+}
+
+export function normalizeNoteDateProperty(value: string): string {
+	return value.trim();
+}
+
+export function normalizeNoteDatePropertyFormat(value: string): string {
+	const trimmed = value.trim();
+	if (!trimmed) {
+		return DEFAULT_SETTINGS.noteDatePropertyFormat;
+	}
+	return trimmed;
 }
 
 export function normalizeSortOrder(value: string): SortOrder {
@@ -179,13 +198,45 @@ export class CalendarSettingTab extends PluginSettingTab {
 			.addDropdown(dropdown => dropdown
 				.addOption('name', 'Name')
 				.addOption('creation-time', 'Creation date/time')
+				.addOption('note-property', 'Note property')
 				.setValue(this.plugin.settings.noteSortBy)
 				.onChange(async (value) => {
 					this.plugin.settings.noteSortBy = normalizeNoteSortBy(value);
 					await this.plugin.saveSettings();
 					this.plugin.refreshCalendarView();
+					this.setSectionVisibility(noteDateSection, this.plugin.settings.noteSortBy === 'note-property');
 				})
 			);
+
+		const noteDateSection = containerEl.createDiv({ cls: 'calendar-settings-nested-section' });
+
+		new Setting(noteDateSection)
+			.setName('Note date property')
+			.setDesc('Empty disables the property source.')
+			.addText(text => text
+				.setPlaceholder('date')
+				.setValue(this.plugin.settings.noteDateProperty)
+				.onChange(async (value) => {
+					this.plugin.settings.noteDateProperty = normalizeNoteDateProperty(value);
+					await this.plugin.saveSettings();
+					this.plugin.refreshCalendarView();
+				})
+			);
+
+		const noteDateFormatSetting = new Setting(noteDateSection)
+			.setName('Note date format')
+			.setDesc(this.buildDateFormatDesc(this.plugin.settings.noteDatePropertyFormat))
+			.addText(text => text
+				.setPlaceholder('DD-MM-YYYY')
+				.setValue(this.plugin.settings.noteDatePropertyFormat)
+				.onChange(async (value) => {
+					this.plugin.settings.noteDatePropertyFormat = normalizeNoteDatePropertyFormat(value);
+					await this.plugin.saveSettings();
+					this.plugin.refreshCalendarView();
+					noteDateFormatSetting.setDesc(this.buildDateFormatDesc(this.plugin.settings.noteDatePropertyFormat));
+				})
+			);
+		this.setSectionVisibility(noteDateSection, this.plugin.settings.noteSortBy === 'note-property');
 
 		new Setting(containerEl)
 			.setName('Sort order')
@@ -430,5 +481,10 @@ export class CalendarSettingTab extends PluginSettingTab {
 		const now = new Date();
 		const preview = formatDateTime(now, format);
 		return `Example: HH:mm, hh:mm:ss aa, YYYY-MM-DD. Preview: ${preview}`;
+	}
+
+	private buildDateFormatDesc(format: string): string {
+		const preview = formatDateTime(new Date(), format);
+		return `Example: DD-MM-YYYY, YYYY-MM-DD. Preview: ${preview}`;
 	}
 }
