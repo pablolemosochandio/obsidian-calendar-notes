@@ -47,7 +47,7 @@ export class CalendarView extends ItemView {
 	private headerSelectorPopover: HTMLElement | null = null;
 	private activeHeaderSelector: 'month' | 'year' | null = null;
 	private yearSelectorCenter: number;
-	private modifyDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+	private modifyDebounceTimer: number | null = null;
 	private refreshGeneration = 0;
 	private lastTouchTapDateKey: string | null = null;
 	private lastTouchTapTimestamp = 0;
