@@ -1,6 +1,7 @@
 import { WorkspaceLeaf, ItemView, Notice, TFile, TFolder, moment, normalizePath, setIcon } from 'obsidian';
 import type CalendarPlugin from '../main';
 import { formatDateTime } from '../settings';
+import { resolveNoteDate } from '../note-date';
 
 export const VIEW_TYPE_CALENDAR = 'calendar-view';
 
@@ -560,9 +561,13 @@ export class CalendarView extends ItemView {
 
 			// Creation time
 			if (this.plugin.settings.showTime) {
-				const createdTime = new Date(note.stat.ctime);
+				const resolved = resolveNoteDate(note, this.app, this.plugin.settings);
 				const timeEl = noteItem.createDiv('calendar-note-time');
-				timeEl.setText(formatDateTime(createdTime, this.plugin.settings.timeIsoDisplay));
+				timeEl.setText(
+					resolved.fromProperty
+						? formatDateTime(resolved.date, 'YYYY-MM-DD')
+						: formatDateTime(resolved.date, this.plugin.settings.timeIsoDisplay)
+				);
 			}
 
 			// Note name text (row click opens the note)
@@ -629,9 +634,12 @@ export class CalendarView extends ItemView {
 
 	private sortNotes(notes: TFile[]): TFile[] {
 		const direction = this.plugin.settings.noteSortOrder === 'ascending' ? 1 : -1;
+		const settings = this.plugin.settings;
 		return notes.sort((left, right) => {
-			if (this.plugin.settings.noteSortBy === 'creation-time') {
-				const timeDifference = left.stat.ctime - right.stat.ctime;
+			if (settings.noteSortBy === 'creation-time' || settings.noteSortBy === 'note-property') {
+				const timeDifference =
+					resolveNoteDate(left, this.app, settings).date.getTime()
+					- resolveNoteDate(right, this.app, settings).date.getTime();
 				if (timeDifference !== 0) {
 					return timeDifference * direction;
 				}
@@ -649,7 +657,7 @@ export class CalendarView extends ItemView {
 	private buildNoteCountMap(year: number, month: number): Map<number, number> {
 		const map = new Map<number, number>();
 		this.app.vault.getMarkdownFiles().forEach(file => {
-			const fileDate = new Date(file.stat.ctime);
+			const fileDate = resolveNoteDate(file, this.app, this.plugin.settings).date;
 			if (fileDate.getFullYear() === year && fileDate.getMonth() === month) {
 				const day = fileDate.getDate();
 				map.set(day, (map.get(day) ?? 0) + 1);
@@ -667,12 +675,12 @@ export class CalendarView extends ItemView {
 	}
 
 	private isNoteCreatedOnDate(file: TFile, date: Date): boolean {
-		const fileDate = new Date(file.stat.ctime);
+		const fileDate = resolveNoteDate(file, this.app, this.plugin.settings).date;
 		return this.isSameDay(fileDate, date);
 	}
 
 	private isNoteCreatedInWeek(file: TFile, weekStartDate: Date): boolean {
-		const fileDate = new Date(file.stat.ctime);
+		const fileDate = resolveNoteDate(file, this.app, this.plugin.settings).date;
 		return this.isDateInWeek(fileDate, weekStartDate);
 	}
 
