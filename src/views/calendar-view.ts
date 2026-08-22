@@ -582,6 +582,16 @@ export class CalendarView extends ItemView {
 				const generation = this.refreshGeneration;
 				void this.populateExcerpt(note, excerptEl, generation);
 			}
+
+			// Frontmatter tag chips — visual only, no handlers
+			if (this.plugin.settings.showTags) {
+				const tagRow = noteItem.createDiv('calendar-note-tag-row');
+				for (const tag of this.getFrontmatterTags(note)) {
+					const chip = tagRow.createSpan('calendar-note-tag');
+					setIcon(chip, 'tag');
+					chip.appendText(tag);
+				}
+			}
 		});
 	}
 
@@ -604,9 +614,17 @@ export class CalendarView extends ItemView {
 		return content
 			.replace(/^---[\s\S]*?---\n?/, '')
 			.replace(/#+\s+.*/g, '')
+			.replace(/#[\w/-]+/g, '')
 			.replace(/[[\]*_`]/g, '')
 			.replace(/\s+/g, ' ')
 			.trim();
+	}
+
+	private getFrontmatterTags(note: TFile): string[] {
+		const raw = this.app.metadataCache.getFileCache(note)?.frontmatter?.tags;
+		if (raw == null) return [];
+		const list = Array.isArray(raw) ? raw : [raw];
+		return list.filter((t): t is string => typeof t === 'string');
 	}
 
 	private getNotesForDate(date: Date): TFile[] {

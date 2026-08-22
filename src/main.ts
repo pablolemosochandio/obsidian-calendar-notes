@@ -9,6 +9,7 @@ import {
 	normalizeNoteDateProperty,
 	normalizeNoteDatePropertyFormat,
 	normalizeSortOrder,
+	normalizeShowTags,
 	normalizeWeekNumberDisplay,
 	normalizeTimeDisplayFormat,
 	normalizeWeekdayVisibility,
@@ -59,6 +60,7 @@ export default class CalendarPlugin extends Plugin {
 		this.settings.enableDailyNoteOnDoubleTap = this.settings.enableDailyNoteOnDoubleTap !== false;
 		this.settings.timeIsoDisplay = normalizeTimeDisplayFormat(this.settings.timeIsoDisplay ?? '');
 		this.settings.excerptLines = normalizeExcerptLines(this.settings.excerptLines ?? DEFAULT_SETTINGS.excerptLines);
+		this.settings.showTags = normalizeShowTags(this.settings.showTags);
 		this.settings.noteSortBy = normalizeNoteSortBy(this.settings.noteSortBy ?? '');
 		this.settings.noteSortOrder = normalizeSortOrder(this.settings.noteSortOrder ?? '');
 		this.settings.noteDateProperty = normalizeNoteDateProperty(this.settings.noteDateProperty ?? '');

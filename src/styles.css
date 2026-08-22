@@ -509,6 +509,33 @@ body.is-mobile .calendar-main-container .calendar-note-name:active {
 	-webkit-box-orient: vertical;
 	line-height: 1.4;
 }
+
+.calendar-note-tag-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin-top: 4px;
+	min-height: 14px;
+}
+
+.calendar-note-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	background-color: var(--tag-background, var(--background-secondary));
+	color: var(--tag-color, var(--text-accent));
+	border: 1px solid var(--tag-border-color, var(--background-modifier-border));
+	border-radius: 8px;
+	font-size: 11px;
+	line-height: 1.2;
+	padding: 2px 8px;
+}
+
+.calendar-note-tag .svg-icon {
+	width: 10px;
+	height: 10px;
+	flex-shrink: 0;
+}
 /* Scrollbar styling */
 .calendar-notes-container::-webkit-scrollbar {
 	width: 6px;
@@ -589,6 +616,11 @@ body.is-mobile .calendar-main-container .calendar-note-item {
 
 body.is-mobile .calendar-main-container .calendar-note-item:active {
 	background: var(--background-secondary);
+}
+
+body.is-mobile .calendar-main-container .calendar-note-tag {
+	font-size: 11px;
+	padding: 3px 8px;
 }
 
 body.is-mobile .calendar-main-container .calendar-month-display {

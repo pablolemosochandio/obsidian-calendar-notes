@@ -34,6 +34,7 @@ export interface CalendarPluginSettings {
 	showTime: boolean;
 	timeIsoDisplay: TimeDisplayFormat;
 	showExcerpt: boolean;
+	showTags: boolean;
 	excerptLines: number;
 	noteSortBy: NoteSortBy;
 	noteSortOrder: SortOrder;
@@ -59,6 +60,7 @@ export const DEFAULT_SETTINGS: CalendarPluginSettings = {
 	showTime: true,
 	timeIsoDisplay: 'HH:mm:ss',
 	showExcerpt: true,
+	showTags: true,
 	excerptLines: 2,
 	noteSortBy: 'creation-time',
 	noteSortOrder: 'ascending',
@@ -97,6 +99,10 @@ export function normalizeExcerptLines(value: number): number {
 	if (value < 1) return 1;
 	if (value > 5) return 5;
 	return Math.round(value);
+}
+
+export function normalizeShowTags(value: unknown): boolean {
+	return value !== false;
 }
 
 export function normalizeNoteSortBy(value: string): NoteSortBy {
@@ -314,6 +320,18 @@ export class CalendarSettingTab extends PluginSettingTab {
 				})
 			);
 		this.setSectionVisibility(excerptSection, this.plugin.settings.showExcerpt);
+
+		new Setting(containerEl)
+			.setName('Show tags')
+			.setDesc('Display a note\'s frontmatter tags as chips.')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.showTags)
+				.onChange(async (value) => {
+					this.plugin.settings.showTags = value;
+					await this.plugin.saveSettings();
+					this.plugin.refreshCalendarView();
+				})
+			);
 
 		new Setting(containerEl)
 			.setName('Calendar display')
