@@ -22,14 +22,14 @@ The system MUST render each frontmatter `tags` value as a chip at the end of eve
 - WHEN the filtered-notes list renders that note
 - THEN two chips appear, one per value, each with the `tag` icon
 
-### Requirement: Inline tags excluded from chips and excerpt
+### Requirement: Inline tags excluded from chips
 
-The system MUST NOT render inline `#tag` tokens as chips. The system MUST strip inline `#tag` tokens (matching `#[\w/-]+`) from the excerpt text so no loose `#word` appears in the body.
+The system MUST NOT render inline `#tag` tokens as chips. The system MUST delegate excerpt inline-`#tag` stripping to the `note-excerpt` capability, which removes `#tag` tokens (matching `#[\w/-]+`) from the excerpt text. The tag chips and the separate `.calendar-note-tag-row` remain unchanged.
 
-#### Scenario: Inline tag stripped from excerpt
+#### Scenario: Inline tag stripped from excerpt (delegated)
 
 - GIVEN a note body containing `Discuss #roadmap today`
-- WHEN the excerpt text is generated
+- WHEN the excerpt text is generated via `note-excerpt`
 - THEN the excerpt reads `Discuss today`, without `#roadmap`
 
 #### Scenario: Inline tag is not a chip
