@@ -602,7 +602,7 @@ export class CalendarView extends ItemView {
 				return;
 			}
 
-			excerptEl.setText(this.createExcerptText(content) || '—');
+			excerptEl.setText(this.createExcerptText(content, this.plugin.settings.excerptLines) || '—');
 		} catch {
 			if (this.refreshGeneration === generation) {
 				excerptEl.setText('—');
@@ -610,14 +610,41 @@ export class CalendarView extends ItemView {
 		}
 	}
 
-	private createExcerptText(content: string): string {
-		return content
-			.replace(/^---[\s\S]*?---\n?/, '')
-			.replace(/#+\s+.*/g, '')
-			.replace(/#[\w/-]+/g, '')
-			.replace(/[[\]*_`]/g, '')
-			.replace(/\s+/g, ' ')
-			.trim();
+	private createExcerptText(content: string, excerptLines: number): string {
+		// (a) frontmatter first — leading `---` block may contain fences/tags.
+		const withoutFrontmatter = content.replace(/^---[\s\S]*?---\n?/, '');
+		// (b) fences before line slicing — block content spans newlines.
+		const withoutFences = withoutFrontmatter.replace(/```[\s\S]*?```/g, '');
+		// (c) horizontal rules before split — standalone `---`/`***` lines.
+		const withoutRules = withoutFences.replace(/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/gm, '');
+		// (d) media before wikilinks/links — avoid a stray `!` surviving.
+		const withoutMedia = withoutRules
+			.replace(/!\[\[[^\]]*\]\]/g, '').replace(/!\[[^\]]*\]\([^)]*\)/g, '');
+		// (e) headings before (f) tags — heading regex needs whitespace, tags do not.
+		const withoutHeadings = withoutMedia.replace(/^#{1,6}\s+/gm, '');
+		// (f) inline tags.
+		const withoutTags = withoutHeadings.replace(/#[\w/-]+/g, '');
+		// (g) wikilinks before (h) links — pipe-alias form before simple form.
+		const wikilinks = withoutTags
+			.replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, '$2').replace(/\[\[([^\]]+)\]\]/g, '$1');
+		// (h) markdown links.
+		const links = wikilinks.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1');
+		// (i) inline strip — blockquotes, list markers, strikethrough, then
+		//     backslash escapes BEFORE emphasis deletion (so `\*literal\*` unescapes
+		//     to `*literal*` and then strips to `literal`), then raw HTML — only
+		//     after structural markdown resolved.
+		const inline = links
+			.replace(/^>\s?/gm, '')
+			.replace(/^\s*(?:[-*+]|\d+\.)\s+/gm, '')
+			.replace(/~([^~]+)~/g, '$1')
+			.replace(/\\([\\`*_{}[\]()#+.!~>-])/g, '$1')
+			.replace(/\*\*/g, '').replace(/\*/g, '').replace(/_/g, '').replace(/`/g, '')
+			.replace(/<[^>]+>/g, '');
+		// (j) per-line collapse (never across `\n`), (k) drop blanks, then slice N.
+		const lines = inline.split('\n')
+			.map(l => l.replace(/[ \t]+/g, ' ').trim())
+			.filter(l => l.length > 0);
+		return lines.slice(0, excerptLines).join('\n');
 	}
 
 	private getFrontmatterTags(note: TFile): string[] {
