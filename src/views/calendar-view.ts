@@ -51,6 +51,7 @@ export class CalendarView extends ItemView {
 	private refreshGeneration = 0;
 	private lastTouchTapDateKey: string | null = null;
 	private lastTouchTapTimestamp = 0;
+	private lastFollowedNotePath: string | null = null;
 
 	constructor(leaf: WorkspaceLeaf, plugin: CalendarPlugin) {
 		super(leaf);
@@ -84,6 +85,7 @@ export class CalendarView extends ItemView {
 			if (this.modifyDebounceTimer) activeWindow.clearTimeout(this.modifyDebounceTimer);
 			this.modifyDebounceTimer = activeWindow.setTimeout(() => this.refresh(), 400);
 		}));
+		this.registerEvent(this.app.workspace.on('active-leaf-change', () => this.onActiveLeafChange()));
 		this.registerDomEvent(activeDocument, 'click', (event) => {
 			if (!this.activeHeaderSelector || !this.monthDisplayContainer) return;
 			if (!this.monthDisplayContainer.contains(event.target as Node)) {
@@ -105,6 +107,42 @@ export class CalendarView extends ItemView {
 		this.renderCalendar();
 		this.updateNotesList();
 		this.renderHeaderSelector();
+	}
+
+	private onActiveLeafChange(): void {
+		if (!this.plugin.settings.followActiveNote) {
+			return;
+		}
+
+		const activeFile = this.app.workspace.getActiveFile();
+		if (!activeFile || activeFile.extension !== 'md') {
+			return;
+		}
+
+		if (activeFile.path === this.lastFollowedNotePath) {
+			return;
+		}
+
+		const resolved = resolveNoteDate(activeFile, this.app, this.plugin.settings);
+		const target = new Date(
+			resolved.date.getFullYear(),
+			resolved.date.getMonth(),
+			resolved.date.getDate()
+		);
+
+		if (this.selectedDate && !this.selectedWeekStart && this.isSameDay(this.selectedDate, target)) {
+			this.lastFollowedNotePath = activeFile.path;
+			return;
+		}
+
+		this.lastFollowedNotePath = activeFile.path;
+		this.currentDate = new Date(target.getFullYear(), target.getMonth(), 1);
+		this.selectedDate = target;
+		this.selectedWeekStart = null;
+		this.yearSelectorCenter = target.getFullYear();
+		this.renderHeader();
+		this.renderCalendar();
+		this.updateNotesList();
 	}
 
 	private createCalendarView(): void {

@@ -28,6 +28,7 @@ const WEEKDAY_VISIBILITY_KEYS: WeekdayVisibilityKey[] = [
 export interface CalendarPluginSettings {
 	showDashes: boolean;
 	enableDailyNoteOnDoubleTap: boolean;
+	followActiveNote: boolean;
 	dashOneThreshold: number;
 	dashTwoThreshold: number;
 	dashThreeThreshold: number;
@@ -54,6 +55,7 @@ export interface CalendarPluginSettings {
 export const DEFAULT_SETTINGS: CalendarPluginSettings = {
 	showDashes: true,
 	enableDailyNoteOnDoubleTap: true,
+	followActiveNote: false,
 	dashOneThreshold: 1,
 	dashTwoThreshold: 3,
 	dashThreeThreshold: 5,
@@ -103,6 +105,10 @@ export function normalizeExcerptLines(value: number): number {
 
 export function normalizeShowTags(value: unknown): boolean {
 	return value !== false;
+}
+
+export function normalizeFollowActiveNote(value: unknown): boolean {
+	return value === true;
 }
 
 export function normalizeNoteSortBy(value: string): NoteSortBy {
@@ -336,6 +342,18 @@ export class CalendarSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName('Calendar display')
 			.setHeading();
+
+		new Setting(containerEl)
+			.setName('Follow active note')
+			.setDesc('When enabled, the calendar jumps to and filters by the date of the note currently open in the editor. Manual navigation pauses following until a different note is opened.')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.followActiveNote)
+				.onChange(async (value) => {
+					this.plugin.settings.followActiveNote = value;
+					await this.plugin.saveSettings();
+					this.plugin.refreshCalendarView();
+				})
+			);
 
 		new Setting(containerEl)
 			.setName('Week starts on')

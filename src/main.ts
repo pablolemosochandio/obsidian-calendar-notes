@@ -5,6 +5,7 @@ import {
 	CalendarSettingTab,
 	DEFAULT_SETTINGS,
 	normalizeExcerptLines,
+	normalizeFollowActiveNote,
 	normalizeNoteSortBy,
 	normalizeNoteDateProperty,
 	normalizeNoteDatePropertyFormat,
@@ -58,6 +59,7 @@ export default class CalendarPlugin extends Plugin {
 		const parsedData = (loadedData ?? {}) as Partial<CalendarPluginSettings>;
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, parsedData);
 		this.settings.enableDailyNoteOnDoubleTap = this.settings.enableDailyNoteOnDoubleTap !== false;
+		this.settings.followActiveNote = normalizeFollowActiveNote(this.settings.followActiveNote);
 		this.settings.timeIsoDisplay = normalizeTimeDisplayFormat(this.settings.timeIsoDisplay ?? '');
 		this.settings.excerptLines = normalizeExcerptLines(this.settings.excerptLines ?? DEFAULT_SETTINGS.excerptLines);
 		this.settings.showTags = normalizeShowTags(this.settings.showTags);
