@@ -1,5 +1,5 @@
 import { App, TFile } from 'obsidian';
-import type { NoteColorRule } from './settings';
+import { normalizeNoteColorRuleKey, type NoteColorRule } from './settings';
 
 /**
  * Evaluates ordered note color rules against a note's metadata cache.
@@ -19,7 +19,7 @@ export function evaluateNoteColor(rules: NoteColorRule[], file: TFile, app: App)
 	}
 
 	for (const rule of rules) {
-		const key = rule.key.trim();
+		const key = normalizeNoteColorRuleKey(rule.type, rule.key);
 		const value = rule.value.trim();
 		if (!key || !value) {
 			continue;
@@ -67,7 +67,9 @@ function matchesStringValue(candidate: unknown, value: string): boolean {
  * Tag rules match FRONTMATTER tags only; inline body tags are ignored.
  * The rule key is the tag prefix and the value the first subtag: a tag
  * `key/value` or deeper (`key/value/sub`) matches when its first two
- * segments equal key and value, case-SENSITIVE.
+ * segments equal key and value, case-SENSITIVE. A leading `#` on the
+ * rule key is optional (normalized before matching) since tags are
+ * displayed with `#` in Obsidian.
  */
 function matchesFrontmatterTag(rawTags: unknown, key: string, value: string): boolean {
 	if (rawTags == null) {

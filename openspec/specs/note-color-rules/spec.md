@@ -32,11 +32,15 @@ Rules MUST match the key case-INSENSITIVELY; values exact, case-SENSITIVE; only 
 
 ### Requirement: Tag matching
 
-Tag rules MUST match only frontmatter `tags`; inline body `#tags` MUST be ignored. `key` is the prefix, `value` the subtag: matches `#key/value` and deeper tags whose first subtag equals `value`, case-SENSITIVE.
+Tag rules MUST match only frontmatter `tags`; inline body `#tags` MUST be ignored. `key` is the prefix, `value` the subtag: matches `#key/value` and deeper tags whose first subtag equals `value`, case-SENSITIVE. A leading `#` on the rule key is OPTIONAL and ignored: `#area` and `area` are equivalent keys.
 
 #### Scenario: Nested subtag
 
 - GIVEN frontmatter `tags: [area/proyecto/sub]` and rule key `area`, value `proyecto` WHEN renders THEN matches
+
+#### Scenario: Leading hash in key
+
+- GIVEN frontmatter `tags: [area/proyecto]` and rule key `#area`, value `proyecto` WHEN renders THEN matches
 
 #### Scenario: Inline ignored
 

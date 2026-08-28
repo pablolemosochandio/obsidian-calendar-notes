@@ -144,6 +144,19 @@ export function normalizeNoteDatePropertyFormat(value: string): string {
 	return trimmed;
 }
 
+/**
+ * Trims a rule key and, for tag rules, strips an optional leading `#`
+ * (users tend to type tags the way Obsidian displays them). Frontmatter
+ * keys are left untouched apart from trimming.
+ */
+export function normalizeNoteColorRuleKey(type: NoteColorRuleType, key: string): string {
+	let normalized = key.trim();
+	if (type === 'tag' && normalized.startsWith('#')) {
+		normalized = normalized.slice(1).trim();
+	}
+	return normalized;
+}
+
 export function normalizeNoteColorRules(value: unknown): NoteColorRule[] {
 	if (!Array.isArray(value)) {
 		return [];
@@ -160,7 +173,10 @@ export function normalizeNoteColorRules(value: unknown): NoteColorRule[] {
 			continue;
 		}
 
-		const key = typeof candidate.key === 'string' ? candidate.key.trim() : '';
+		const key = normalizeNoteColorRuleKey(
+			candidate.type,
+			typeof candidate.key === 'string' ? candidate.key : ''
+		);
 		const ruleValue = typeof candidate.value === 'string' ? candidate.value.trim() : '';
 		const color = typeof candidate.color === 'string' && HEX_COLOR_PATTERN.test(candidate.color)
 			? candidate.color
@@ -744,7 +760,10 @@ export class CalendarSettingTab extends PluginSettingTab {
 				if (earlier.key.trim().toLowerCase() === key.toLowerCase() && earlier.value.trim() === value) {
 					return earlierIndex;
 				}
-			} else if (earlier.key.trim() === key && earlier.value.trim() === value) {
+			} else if (
+				normalizeNoteColorRuleKey('tag', earlier.key) === normalizeNoteColorRuleKey('tag', key)
+				&& earlier.value.trim() === value
+			) {
 				return earlierIndex;
 			}
 		}
