@@ -4,8 +4,11 @@ import {
 	CalendarPluginSettings,
 	CalendarSettingTab,
 	DEFAULT_SETTINGS,
+	isCompleteNoteColorRule,
+	normalizeDefaultNoteAccentColor,
 	normalizeExcerptLines,
 	normalizeFollowActiveNote,
+	normalizeNoteColorRules,
 	normalizeNoteSortBy,
 	normalizeNoteDateProperty,
 	normalizeNoteDatePropertyFormat,
@@ -67,12 +70,20 @@ export default class CalendarPlugin extends Plugin {
 		this.settings.noteSortOrder = normalizeSortOrder(this.settings.noteSortOrder ?? '');
 		this.settings.noteDateProperty = normalizeNoteDateProperty(this.settings.noteDateProperty ?? '');
 		this.settings.noteDatePropertyFormat = normalizeNoteDatePropertyFormat(this.settings.noteDatePropertyFormat ?? '');
+		this.settings.noteColorRules = normalizeNoteColorRules(this.settings.noteColorRules);
+		this.settings.defaultNoteAccentColor = normalizeDefaultNoteAccentColor(this.settings.defaultNoteAccentColor);
 		this.settings.weekNumberDisplay = normalizeWeekNumberDisplay(this.settings.weekNumberDisplay ?? '');
 		normalizeWeekdayVisibility(this.settings);
 	}
 
 	async saveSettings(): Promise<void> {
-		await this.saveData(this.settings);
+		// Incomplete rules (empty key/value) live in memory for the settings
+		// tab but are never persisted; the load normalizer drops them anyway.
+		const settingsToSave = {
+			...this.settings,
+			noteColorRules: this.settings.noteColorRules.filter((rule) => isCompleteNoteColorRule(rule)),
+		};
+		await this.saveData(settingsToSave);
 	}
 
 	refreshCalendarView(): void {

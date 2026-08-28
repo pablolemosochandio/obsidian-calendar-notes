@@ -6,6 +6,16 @@ export type WeekStartDay = 'monday' | 'sunday';
 export type WeekNumberDisplay = 'off' | 'iso-8601' | 'united-states';
 export type NoteSortBy = 'name' | 'creation-time' | 'note-property';
 export type SortOrder = 'ascending' | 'descending';
+export type NoteColorRuleType = 'frontmatter' | 'tag';
+
+export interface NoteColorRule {
+	type: NoteColorRuleType;
+	key: string;
+	value: string;
+	color: string;
+}
+
+const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 export type WeekdayVisibilityKey =
 	| 'showSunday'
 	| 'showMonday'
@@ -41,6 +51,8 @@ export interface CalendarPluginSettings {
 	noteSortOrder: SortOrder;
 	noteDateProperty: string;
 	noteDatePropertyFormat: string;
+	noteColorRules: NoteColorRule[];
+	defaultNoteAccentColor: string;
 	weekStartDay: WeekStartDay;
 	weekNumberDisplay: WeekNumberDisplay;
 	showSunday: boolean;
@@ -68,6 +80,8 @@ export const DEFAULT_SETTINGS: CalendarPluginSettings = {
 	noteSortOrder: 'ascending',
 	noteDateProperty: '',
 	noteDatePropertyFormat: 'DD-MM-YYYY',
+	noteColorRules: [],
+	defaultNoteAccentColor: '',
 	weekStartDay: 'sunday',
 	weekNumberDisplay: 'off',
 	showSunday: true,
@@ -128,6 +142,53 @@ export function normalizeNoteDatePropertyFormat(value: string): string {
 		return DEFAULT_SETTINGS.noteDatePropertyFormat;
 	}
 	return trimmed;
+}
+
+export function normalizeNoteColorRules(value: unknown): NoteColorRule[] {
+	if (!Array.isArray(value)) {
+		return [];
+	}
+
+	const rules: NoteColorRule[] = [];
+	for (const entry of value) {
+		if (!entry || typeof entry !== 'object') {
+			continue;
+		}
+
+		const candidate = entry as Partial<NoteColorRule>;
+		if (candidate.type !== 'frontmatter' && candidate.type !== 'tag') {
+			continue;
+		}
+
+		const key = typeof candidate.key === 'string' ? candidate.key.trim() : '';
+		const ruleValue = typeof candidate.value === 'string' ? candidate.value.trim() : '';
+		const color = typeof candidate.color === 'string' && HEX_COLOR_PATTERN.test(candidate.color)
+			? candidate.color
+			: '';
+		if (!key || !ruleValue || !color) {
+			continue;
+		}
+
+		rules.push({ type: candidate.type, key, value: ruleValue, color });
+	}
+
+	return rules;
+}
+
+export function normalizeDefaultNoteAccentColor(value: unknown): string {
+	if (typeof value !== 'string') {
+		return '';
+	}
+	return HEX_COLOR_PATTERN.test(value) ? value : '';
+}
+
+export function isCompleteNoteColorRule(rule: NoteColorRule): boolean {
+	return (
+		(rule.type === 'frontmatter' || rule.type === 'tag')
+		&& typeof rule.key === 'string' && rule.key.trim() !== ''
+		&& typeof rule.value === 'string' && rule.value.trim() !== ''
+		&& typeof rule.color === 'string' && HEX_COLOR_PATTERN.test(rule.color)
+	);
 }
 
 export function normalizeSortOrder(value: string): SortOrder {

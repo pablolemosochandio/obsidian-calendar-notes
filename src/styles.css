@@ -443,14 +443,16 @@
 .calendar-note-item {
 	padding: 6px 8px;
 	background: transparent;
-	border-left: 3px solid var(--interactive-accent);
+	border-left: 3px solid var(--calendar-note-accent,
+		var(--calendar-note-accent-default, var(--interactive-accent)));
 	border-radius: 2px;
 	transition: background-color 0.2s ease, border-color 0.2s ease;
 	cursor: pointer;
 }
 
 .calendar-note-item:hover {
-	border-left-color: var(--interactive-accent-hover);
+	border-left-color: var(--calendar-note-accent-hover,
+		var(--calendar-note-accent-default-hover, var(--interactive-accent-hover)));
 }
 
 @media (hover: hover) {

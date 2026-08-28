@@ -2,6 +2,7 @@ import { WorkspaceLeaf, ItemView, Notice, TFile, TFolder, moment, normalizePath,
 import type CalendarPlugin from '../main';
 import { formatDateTime } from '../settings';
 import { resolveNoteDate } from '../note-date';
+import { evaluateNoteColor } from '../note-rules';
 
 export const VIEW_TYPE_CALENDAR = 'calendar-view';
 
@@ -591,8 +592,29 @@ export class CalendarView extends ItemView {
 
 		const notesList = this.notesContainer.createDiv('calendar-notes-list');
 
+		// An explicit default accent applies to every note this container renders.
+		const defaultNoteAccent = this.plugin.settings.defaultNoteAccentColor;
+		if (defaultNoteAccent) {
+			notesList.style.setProperty('--calendar-note-accent-default', defaultNoteAccent);
+			notesList.style.setProperty(
+				'--calendar-note-accent-default-hover',
+				`color-mix(in srgb, ${defaultNoteAccent} 75%, var(--interactive-accent-hover))`
+			);
+		}
+
 		notes.forEach(note => {
 			const noteItem = notesList.createDiv('calendar-note-item');
+
+			// A matching rule colors only the vertical accent bar (border-left).
+			const ruleColor = evaluateNoteColor(this.plugin.settings.noteColorRules, note, this.app);
+			if (ruleColor) {
+				noteItem.style.setProperty('--calendar-note-accent', ruleColor);
+				noteItem.style.setProperty(
+					'--calendar-note-accent-hover',
+					`color-mix(in srgb, ${ruleColor} 75%, var(--interactive-accent-hover))`
+				);
+			}
+
 			noteItem.onclick = () => {
 				void this.app.workspace.getLeaf(false).openFile(note);
 			};
