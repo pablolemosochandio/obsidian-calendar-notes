@@ -18,6 +18,30 @@
 	display: none;
 }
 
+/* Note color rules — settings tab */
+.calendar-rule-row .setting-item-control {
+	flex-wrap: wrap;
+	width: 100%;
+	justify-content: flex-end;
+}
+
+.calendar-rule-row .setting-item-control input[type='text'] {
+	width: 110px;
+}
+
+body.is-mobile .calendar-rule-row {
+	flex-direction: column;
+	align-items: stretch;
+}
+
+body.is-mobile .calendar-rule-row .setting-item-control {
+	justify-content: flex-end;
+}
+
+body.is-mobile .calendar-rule-row .setting-item-control input[type='text'] {
+	width: 100%;
+}
+
 .calendar-days-setting .setting-item-control {
 	width: auto;
 	margin-left: 12px;

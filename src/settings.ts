@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting } from 'obsidian';
+import { App, ColorComponent, PluginSettingTab, Setting } from 'obsidian';
 import type CalendarPlugin from './main';
 
 export type TimeDisplayFormat = string;
@@ -401,6 +401,57 @@ export class CalendarSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
+			.setName('Note color rules')
+			.setHeading();
+
+		let defaultColorPicker: ColorComponent | null = null;
+
+		new Setting(containerEl)
+			.setName('Default accent color')
+			.setDesc('Color used for notes no rule matches. Follows the theme accent until you pick a color.')
+			.addColorPicker(picker => {
+				defaultColorPicker = picker;
+				picker
+					.setValue(this.plugin.settings.defaultNoteAccentColor || this.getComputedAccentHex())
+					.onChange(async (value) => {
+						this.plugin.settings.defaultNoteAccentColor = value;
+						await this.plugin.saveSettings();
+						this.plugin.refreshCalendarView();
+					});
+			})
+			.addButton(button => button
+				.setButtonText('Reset')
+				.setTooltip('Follow the theme accent')
+				.onClick(async () => {
+					this.plugin.settings.defaultNoteAccentColor = '';
+					await this.plugin.saveSettings();
+					this.plugin.refreshCalendarView();
+					if (defaultColorPicker) {
+						defaultColorPicker.setValue(this.getComputedAccentHex());
+					}
+				})
+			);
+
+		const rulesContainer = containerEl.createDiv({ cls: 'calendar-rule-container' });
+		this.renderRuleRows(rulesContainer);
+
+		new Setting(containerEl)
+			.addButton(button => button
+				.setButtonText('Add rule')
+				.onClick(async () => {
+					this.plugin.settings.noteColorRules.push({
+						type: 'frontmatter',
+						key: '',
+						value: '',
+						color: this.getComputedAccentHex(),
+					});
+					this.renderRuleRows(rulesContainer);
+					await this.plugin.saveSettings();
+					this.plugin.refreshCalendarView();
+				})
+			);
+
+		new Setting(containerEl)
 			.setName('Calendar display')
 			.setHeading();
 
@@ -572,6 +623,140 @@ export class CalendarSettingTab extends PluginSettingTab {
 
 	private setSectionVisibility(section: HTMLElement, visible: boolean): void {
 		section.classList.toggle('is-hidden', !visible);
+	}
+
+	private renderRuleRows(rulesContainer: HTMLElement): void {
+		rulesContainer.empty();
+		this.plugin.settings.noteColorRules.forEach((rule, index) => {
+			this.renderRuleRow(rulesContainer, rule, index);
+		});
+	}
+
+	private renderRuleRow(rulesContainer: HTMLElement, rule: NoteColorRule, index: number): void {
+		const rules = this.plugin.settings.noteColorRules;
+		const row = new Setting(rulesContainer);
+		row.settingEl.addClass('calendar-rule-row');
+
+		row.addDropdown(dropdown => dropdown
+			.addOption('frontmatter', 'Property')
+			.addOption('tag', 'Tag')
+			.setValue(rule.type)
+			.onChange(async (value) => {
+				rule.type = value === 'tag' ? 'tag' : 'frontmatter';
+				await this.commitRuleRowEdit(row, rule, index);
+			})
+		);
+
+		row.addText(text => text
+			.setPlaceholder('key')
+			.setValue(rule.key)
+			.onChange(async (value) => {
+				rule.key = value;
+				await this.commitRuleRowEdit(row, rule, index);
+			})
+		);
+
+		row.addText(text => text
+			.setPlaceholder('value')
+			.setValue(rule.value)
+			.onChange(async (value) => {
+				rule.value = value;
+				await this.commitRuleRowEdit(row, rule, index);
+			})
+		);
+
+		row.addColorPicker(picker => picker
+			.setValue(rule.color || this.getComputedAccentHex())
+			.onChange(async (value) => {
+				rule.color = value;
+				await this.commitRuleRowEdit(row, rule, index);
+			})
+		);
+
+		row.addExtraButton(button => button
+			.setIcon('chevron-up')
+			.setTooltip('Move rule up')
+			.setDisabled(index === 0)
+			.onClick(async () => {
+				[rules[index - 1], rules[index]] = [rules[index], rules[index - 1]];
+				this.renderRuleRows(rulesContainer);
+				await this.plugin.saveSettings();
+				this.plugin.refreshCalendarView();
+			})
+		);
+
+		row.addExtraButton(button => button
+			.setIcon('chevron-down')
+			.setTooltip('Move rule down')
+			.setDisabled(index === rules.length - 1)
+			.onClick(async () => {
+				[rules[index + 1], rules[index]] = [rules[index], rules[index + 1]];
+				this.renderRuleRows(rulesContainer);
+				await this.plugin.saveSettings();
+				this.plugin.refreshCalendarView();
+			})
+		);
+
+		row.addExtraButton(button => button
+			.setIcon('trash-2')
+			.setTooltip('Remove rule')
+			.onClick(async () => {
+				rules.splice(index, 1);
+				this.renderRuleRows(rulesContainer);
+				await this.plugin.saveSettings();
+				this.plugin.refreshCalendarView();
+			})
+		);
+
+		row.setDesc(this.buildRuleFeedback(rule, index));
+	}
+
+	private async commitRuleRowEdit(row: Setting, rule: NoteColorRule, index: number): Promise<void> {
+		row.setDesc(this.buildRuleFeedback(rule, index));
+		await this.plugin.saveSettings();
+		this.plugin.refreshCalendarView();
+	}
+
+	private buildRuleFeedback(rule: NoteColorRule, index: number): string {
+		if (!isCompleteNoteColorRule(rule)) {
+			return 'Key and value are required';
+		}
+
+		const earlierMatchIndex = this.findEarlierMatchingRule(rule, index);
+		if (earlierMatchIndex !== null) {
+			return `Never applies — earlier rule #${earlierMatchIndex + 1} matches`;
+		}
+
+		return '';
+	}
+
+	private findEarlierMatchingRule(rule: NoteColorRule, index: number): number | null {
+		const key = rule.key.trim();
+		const value = rule.value.trim();
+
+		for (let earlierIndex = 0; earlierIndex < index; earlierIndex++) {
+			const earlier = this.plugin.settings.noteColorRules[earlierIndex];
+			if (earlier.type !== rule.type || !isCompleteNoteColorRule(earlier)) {
+				continue;
+			}
+
+			if (earlier.type === 'frontmatter') {
+				if (earlier.key.trim().toLowerCase() === key.toLowerCase() && earlier.value.trim() === value) {
+					return earlierIndex;
+				}
+			} else if (earlier.key.trim() === key && earlier.value.trim() === value) {
+				return earlierIndex;
+			}
+		}
+
+		return null;
+	}
+
+	private getComputedAccentHex(): string {
+		const accent = getComputedStyle(this.containerEl.doc.body)
+			.getPropertyValue('--interactive-accent')
+			.trim();
+		return HEX_COLOR_PATTERN.test(accent) ? accent : '#7d7d7d';
 	}
 
 	private buildTimeFormatDesc(format: TimeDisplayFormat): string {
