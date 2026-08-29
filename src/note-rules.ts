@@ -5,8 +5,10 @@ import { normalizeNoteColorRuleKey, type NoteColorRule } from './settings';
  * Evaluates ordered note color rules against a note's metadata cache.
  *
  * Rules are evaluated in array order; the FIRST match wins and its color is
- * returned. Returns null when no rule matches. Rules with an empty key or
- * value are skipped (incomplete rules never match).
+ * returned. Returns null when no rule matches. Incomplete rules never match:
+ * a trimmed non-empty value is required for both types; the key is required
+ * only for frontmatter rules. Tag rules ignore the key entirely (migrated
+ * tag rules persist with an empty key).
  *
  * Read-only: this only reads the metadata cache. It never writes, modifies,
  * or removes any note attribute or frontmatter value, and never invokes
@@ -19,17 +21,20 @@ export function evaluateNoteColor(rules: NoteColorRule[], file: TFile, app: App)
 	}
 
 	for (const rule of rules) {
-		const key = normalizeNoteColorRuleKey(rule.type, rule.key);
 		const value = rule.value.trim();
-		if (!key || !value) {
+		if (!value) {
 			continue;
 		}
 
-		if (rule.type === 'frontmatter' && matchesFrontmatterValue(frontmatter, key, value)) {
+		if (rule.type === 'frontmatter') {
+			const key = normalizeNoteColorRuleKey(rule.type, rule.key);
+			if (!key || !matchesFrontmatterValue(frontmatter, key, value)) {
+				continue;
+			}
 			return rule.color;
 		}
 
-		if (rule.type === 'tag' && matchesFrontmatterTag(frontmatter.tags, key, value)) {
+		if (rule.type === 'tag' && matchesFrontmatterTag(frontmatter.tags, value)) {
 			return rule.color;
 		}
 	}
@@ -64,18 +69,34 @@ function matchesStringValue(candidate: unknown, value: string): boolean {
 }
 
 /**
- * Tag rules match FRONTMATTER tags only; inline body tags are ignored.
- * The rule key is the tag prefix and the value the first subtag: a tag
- * `key/value` or deeper (`key/value/sub`) matches when its first two
- * segments equal key and value, case-SENSITIVE. A leading `#` on the
- * rule key is optional (normalized before matching) since tags are
- * displayed with `#` in Obsidian.
+ * Compiles a tag rule value into an anchored, case-SENSITIVE pattern.
+ * The value is normalized first (trimmed, optional leading `#` stripped),
+ * then every regex metacharacter is escaped except `*`, which becomes `.*`
+ * (greedy — matches any characters, including `/`). The pattern is anchored
+ * with `^…$`, so a tag matches only when its WHOLE name fits the pattern;
+ * there is no implicit prefix/nesting behavior. Compiled per call: rule
+ * counts are tiny (user-entered), so memoization would add cache state
+ * without measurable gain.
  */
-function matchesFrontmatterTag(rawTags: unknown, key: string, value: string): boolean {
+function compileTagPattern(value: string): RegExp {
+	const normalized = normalizeNoteColorRuleKey('tag', value);
+	const escaped = normalized.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
+	return new RegExp('^' + escaped + '$');
+}
+
+/**
+ * Tag rules match FRONTMATTER tags only; inline body tags are ignored.
+ * Each raw tag has an optional leading `#` stripped and its FULL name is
+ * tested against the rule value's anchored wildcard pattern: `sistemas`
+ * matches only the exact tag `sistemas`, while `sistemas/*` matches nested
+ * tags below it. Matching is case-SENSITIVE and literal except `*`.
+ */
+function matchesFrontmatterTag(rawTags: unknown, value: string): boolean {
 	if (rawTags == null) {
 		return false;
 	}
 
+	const pattern = compileTagPattern(value);
 	const tags = Array.isArray(rawTags) ? rawTags : [rawTags];
 	return tags.some((rawTag) => {
 		if (typeof rawTag !== 'string') {
@@ -83,7 +104,6 @@ function matchesFrontmatterTag(rawTags: unknown, key: string, value: string): bo
 		}
 
 		const tag = rawTag.startsWith('#') ? rawTag.slice(1) : rawTag;
-		const segments = tag.split('/');
-		return segments.length >= 2 && segments[0] === key && segments[1] === value;
+		return pattern.test(tag);
 	});
 }

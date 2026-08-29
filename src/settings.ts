@@ -181,11 +181,24 @@ export function normalizeNoteColorRules(value: unknown): NoteColorRule[] {
 		const color = typeof candidate.color === 'string' && HEX_COLOR_PATTERN.test(candidate.color)
 			? candidate.color
 			: '';
-		if (!key || !ruleValue || !color) {
-			continue;
-		}
 
-		rules.push({ type: candidate.type, key, value: ruleValue, color });
+		if (candidate.type === 'tag') {
+			// Key is optional for tag rules (migrated rules store key === '').
+			if (!ruleValue || !color) {
+				continue;
+			}
+			// One-way migration of legacy tag rules (prefix key + subtag
+			// value): merge the normalized key into the value. Already-migrated
+			// rules have an empty key and pass through unchanged, so reloads
+			// never double-prefix.
+			const migratedValue = key ? `${key}/${ruleValue}` : ruleValue;
+			rules.push({ type: 'tag', key: '', value: migratedValue, color });
+		} else {
+			if (!key || !ruleValue || !color) {
+				continue;
+			}
+			rules.push({ type: 'frontmatter', key, value: ruleValue, color });
+		}
 	}
 
 	return rules;
@@ -199,12 +212,21 @@ export function normalizeDefaultNoteAccentColor(value: unknown): string {
 }
 
 export function isCompleteNoteColorRule(rule: NoteColorRule): boolean {
-	return (
-		(rule.type === 'frontmatter' || rule.type === 'tag')
-		&& typeof rule.key === 'string' && rule.key.trim() !== ''
-		&& typeof rule.value === 'string' && rule.value.trim() !== ''
-		&& typeof rule.color === 'string' && HEX_COLOR_PATTERN.test(rule.color)
-	);
+	if (rule.type !== 'frontmatter' && rule.type !== 'tag') {
+		return false;
+	}
+	if (typeof rule.value !== 'string' || rule.value.trim() === '') {
+		return false;
+	}
+	if (typeof rule.color !== 'string' || !HEX_COLOR_PATTERN.test(rule.color)) {
+		return false;
+	}
+	// Key is required only for frontmatter rules; tag rules ignore it
+	// (migrated tag rules persist with an empty key).
+	if (rule.type === 'frontmatter') {
+		return typeof rule.key === 'string' && rule.key.trim() !== '';
+	}
+	return true;
 }
 
 export function normalizeSortOrder(value: string): SortOrder {
@@ -659,21 +681,25 @@ export class CalendarSettingTab extends PluginSettingTab {
 			.setValue(rule.type)
 			.onChange(async (value) => {
 				rule.type = value === 'tag' ? 'tag' : 'frontmatter';
-				await this.commitRuleRowEdit(row, rule, index);
+				this.renderRuleRows(rulesContainer);
+				await this.plugin.saveSettings();
+				this.plugin.refreshCalendarView();
 			})
 		);
 
-		row.addText(text => text
-			.setPlaceholder('key')
-			.setValue(rule.key)
-			.onChange(async (value) => {
-				rule.key = value;
-				await this.commitRuleRowEdit(row, rule, index);
-			})
-		);
+		if (rule.type === 'frontmatter') {
+			row.addText(text => text
+				.setPlaceholder('key')
+				.setValue(rule.key)
+				.onChange(async (value) => {
+					rule.key = value;
+					await this.commitRuleRowEdit(row, rule, index);
+				})
+			);
+		}
 
 		row.addText(text => text
-			.setPlaceholder('value')
+			.setPlaceholder(rule.type === 'tag' ? 'tag name (wildcards: *)' : 'value')
 			.setValue(rule.value)
 			.onChange(async (value) => {
 				rule.value = value;
@@ -735,7 +761,7 @@ export class CalendarSettingTab extends PluginSettingTab {
 
 	private buildRuleFeedback(rule: NoteColorRule, index: number): string {
 		if (!isCompleteNoteColorRule(rule)) {
-			return 'Key and value are required';
+			return rule.type === 'tag' ? 'Value is required' : 'Key and value are required';
 		}
 
 		const earlierMatchIndex = this.findEarlierMatchingRule(rule, index);
@@ -761,9 +787,11 @@ export class CalendarSettingTab extends PluginSettingTab {
 					return earlierIndex;
 				}
 			} else if (
-				normalizeNoteColorRuleKey('tag', earlier.key) === normalizeNoteColorRuleKey('tag', key)
-				&& earlier.value.trim() === value
+				normalizeNoteColorRuleKey('tag', earlier.value) === normalizeNoteColorRuleKey('tag', value)
 			) {
+				// Tag duplicates compare the normalized value pattern by exact
+				// equality; overlapping wildcards (e.g. `sistemas/*` vs
+				// `sistemas/reunion`) are NOT detected — documented limitation.
 				return earlierIndex;
 			}
 		}
