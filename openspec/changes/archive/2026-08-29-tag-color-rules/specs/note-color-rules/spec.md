@@ -1,38 +1,12 @@
-# Note Color Rules Specification
+# Delta for note-color-rules
 
-## Purpose
-
-Color each note row's vertical accent bar (`border-left`) via ordered, user-defined rules matching frontmatter or tags. Unmatched notes use a configurable default color initialized to the theme accent.
-
-## Requirements
-
-### Requirement: Rule model and precedence
-
-Settings MUST expose `noteColorRules: { type: 'frontmatter' | 'tag'; key: string; value: string; color: string }[]`, default `[]`; ordered, FIRST match wins.
-
-#### Scenario: First match wins
-
-- GIVEN two matching rules, A before B WHEN a note renders THEN A's color applies
-
-### Requirement: Frontmatter matching
-
-Rules MUST match the key case-INSENSITIVELY; values exact, case-SENSITIVE; only strings match (string or list elements). Date-shaped strings like `2026-08-28` ARE strings and match; non-string scalars never match.
-
-#### Scenario: Key and list
-
-- GIVEN frontmatter `Projects: [Alpha]` and rule key `projects`, value `Alpha` WHEN renders THEN matches
-
-#### Scenario: Value case
-
-- GIVEN the same note and rule value `alpha` WHEN renders THEN no match
-
-#### Scenario: Non-text
-
-- GIVEN frontmatter `priority: 3` and rule value `3` WHEN renders THEN no match (not a string)
+## MODIFIED Requirements
 
 ### Requirement: Tag matching
 
 Tag rules MUST match only frontmatter `tags`; inline `#tags` MUST be ignored. `value` holds the FULL tag name; `key` MUST be ignored (even empty). Matching is anchored, case-SENSITIVE, literal except `*`: exact value matches only that exact tag — no implicit nesting; `*` matches any chars INCLUDING `/` (greedy). A leading `#` on the value is OPTIONAL and ignored.
+
+(Previously: value was subtag under prefix key; deeper tags matched.)
 
 #### Scenario: Exact name
 
@@ -70,29 +44,11 @@ Tag rules MUST match only frontmatter `tags`; inline `#tags` MUST be ignored. `v
 
 - GIVEN a body `#sistemas` tag and no frontmatter `tags` WHEN renders THEN no match
 
-### Requirement: Configurable default color
-
-Settings MUST expose a default color (swatch + native picker) initialized to the theme accent; until the user explicitly picks (sentinel), it follows the accent, then the stored color wins. Unmatched notes and zero rules MUST use it.
-
-#### Scenario: Sentinel
-
-- GIVEN a fresh install WHEN notes render THEN bars use the theme accent
-
-#### Scenario: Explicit pick
-
-- GIVEN the user picked `#123456` WHEN the theme changes THEN unmatched bars stay that color
-
-### Requirement: Rendering scope and hover
-
-The rule color MUST change only the row's `border-left`; no other UI element MAY change color. The hover tint MUST keep working.
-
-#### Scenario: Only the bar
-
-- GIVEN a matched row WHEN it renders THEN only `border-left` changes and hover still tints it
-
 ### Requirement: Rules settings UI
 
 The settings tab MUST support add, remove, and reorder (up/down). Saving MUST block incomplete rules: frontmatter needs type+key+value+color; tag needs value+color only. Tag rows MUST hide the key input — only type, value, color, reorder/remove show. Type change MUST rebuild the row. Duplicates MUST warn the later rule never applies: frontmatter by type+key+value; tag by exact value pattern. Overlapping wildcards are NOT detected (documented limitation).
+
+(Previously: completeness required key for all; duplicates by type+key+value.)
 
 #### Scenario: Incomplete
 
@@ -126,6 +82,8 @@ The settings tab MUST support add, remove, and reorder (up/down). Saving MUST bl
 
 The normalizer MUST handle missing, non-array, and malformed `noteColorRules` without throwing: non-arrays become `[]`, malformed dropped, values trimmed, colors hex-validated. Legacy tag rules with non-empty key MUST migrate deterministically at load: `value` = `normalized-key + '/' + value` (leading `#` stripped), `key` = `''`. Migration is one-way, documented; migrated tag rules MUST stay complete with empty key. `loadSettings()` MUST call the normalizer; changes MUST save via `saveSettings()` + `refreshCalendarView()`.
 
+(Previously: tag rules kept their prefix key; no migration existed.)
+
 #### Scenario: Legacy vault
 
 - GIVEN `data.json` without `noteColorRules` WHEN the plugin loads THEN settings load `[]` unchanged
@@ -141,15 +99,3 @@ The normalizer MUST handle missing, non-array, and malformed `noteColorRules` wi
 #### Scenario: Migrated match
 
 - GIVEN the migrated rule and frontmatter `tags: [area/proyecto]` WHEN renders THEN matches
-
-### Requirement: Read-only and platform parity
-
-Matching MUST only read the metadata cache; the plugin MUST NOT write, modify, or remove any note attribute. MUST work on desktop and mobile/iPad; lint, typecheck, and build MUST pass.
-
-#### Scenario: No data written
-
-- GIVEN matching notes WHEN bars render THEN no write or modify event fires; files stay byte-identical
-
-#### Scenario: Mobile
-
-- GIVEN the plugin on a mobile device WHEN rows render THEN the UI is usable and bars render correctly
