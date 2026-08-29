@@ -75,6 +75,7 @@ export class CalendarView extends ItemView {
 	}
 
 	onOpen(): Promise<void> {
+		this.resolveOpenSelection();
 		this.createCalendarView();
 		const activeWindow = window.activeWindow ?? window;
 		const activeDocument = window.activeDocument ?? document;
@@ -144,6 +145,26 @@ export class CalendarView extends ItemView {
 		this.renderHeader();
 		this.renderCalendar();
 		this.updateNotesList();
+	}
+
+	// One-time view-open selection: an active note (follow ON) wins over the
+	// constructor's default of today. Resolves synchronously before the first
+	// render so the view never selects today and then jumps — no visual flash.
+	private resolveOpenSelection(): void {
+		if (!this.plugin.settings.followActiveNote) {
+			return;
+		}
+
+		const activeFile = this.app.workspace.getActiveFile();
+		if (!activeFile || activeFile.extension !== 'md') {
+			return;
+		}
+
+		const resolved = resolveNoteDate(activeFile, this.app, this.plugin.settings);
+		this.currentDate = new Date(resolved.date.getFullYear(), resolved.date.getMonth(), 1);
+		this.selectedDate = new Date(resolved.date.getFullYear(), resolved.date.getMonth(), resolved.date.getDate());
+		this.yearSelectorCenter = resolved.date.getFullYear();
+		this.lastFollowedNotePath = activeFile.path;
 	}
 
 	private createCalendarView(): void {
@@ -244,21 +265,30 @@ export class CalendarView extends ItemView {
 
 			for (const weekday of visibleWeekdays) {
 				const day = week * 7 + weekday.displayIndex - firstDay + 1;
-				if (day < 1 || day > daysInMonth) {
-					this.calendarContainer.createDiv('calendar-empty-day');
-					continue;
-				}
-
+				// JS Date math normalizes out-of-range day numbers, so trailing
+				// days of adjacent months render as real, selectable cells
+				// instead of empty placeholders.
 				const date = new Date(year, month, day);
 				const dayCell = this.calendarContainer.createDiv('calendar-day');
 
+				if (date.getMonth() !== month) {
+					dayCell.addClass('calendar-day-adjacent-month');
+				}
+
 				// Day number label
 				const dayNumber = dayCell.createDiv('calendar-day-number');
-				dayNumber.setText(day.toString());
+				dayNumber.setText(date.getDate().toString());
 
-				// Dash indicators
+				// Today highlight — in-month cells only, so viewing another
+				// month never marks an adjacent cell as today.
+				if (date.getMonth() === month && this.isSameDay(date, new Date())) {
+					dayCell.addClass('calendar-day-today');
+				}
+
+				// Dash indicators — adjacent-month cells keep an empty dashes
+				// container for row alignment.
 				if (this.plugin.settings.showDashes) {
-					const noteCount = noteCountMap.get(day) ?? 0;
+					const noteCount = date.getMonth() === month ? (noteCountMap.get(day) ?? 0) : 0;
 					const dashCount = this.getDashCount(noteCount);
 					const dashEl = dayCell.createDiv('calendar-day-dashes');
 					for (let i = 0; i < dashCount; i++) {

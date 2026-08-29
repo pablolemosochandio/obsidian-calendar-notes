@@ -6,15 +6,15 @@ Opt-in auto-follow: when enabled, the calendar jumps to the DAY view of the acti
 
 ## Requirements
 
-### Requirement ANR-1: `followActiveNote` toggle
+### Requirement: ANR-1 `followActiveNote` toggle
 
-The settings MUST expose `followActiveNote` (boolean), default `false` (opt-in), following the normalizer + `loadSettings()` + settings-tab + `saveSettings()` + `refreshCalendarView()` pattern. When `false`, the calendar MUST remain fully user-driven.
+The settings MUST expose `followActiveNote` (boolean), default `false` (opt-in), following the normalizer + `loadSettings()` + settings-tab + `saveSettings()` + `refreshCalendarView()` pattern. When `false`, the calendar MUST remain fully user-driven except for the one-time view-open today selection (ANR-8).
 
 #### Scenario: Default is OFF
 
 - GIVEN default settings
 - WHEN the plugin loads
-- THEN `followActiveNote` is `false` and no auto-jump occurs
+- THEN `followActiveNote` is `false` and no follow-driven auto-jump occurs
 
 #### Scenario: Toggle ON
 
@@ -22,7 +22,7 @@ The settings MUST expose `followActiveNote` (boolean), default `false` (opt-in),
 - WHEN the user enables it and settings save
 - THEN `refreshCalendarView()` runs and follow becomes active
 
-### Requirement ANR-2: Follow a newly opened note
+### Requirement: ANR-2 Follow a newly opened note
 
 When `followActiveNote` is on and the active editor file changes to a Markdown note, the system MUST resolve its date via `resolveNoteDate`, jump to that DAY view (`selectedWeekStart` = null, `currentDate` = that month), and re-render so the list filters to it.
 
@@ -44,7 +44,7 @@ When `followActiveNote` is on and the active editor file changes to a Markdown n
 - WHEN it becomes active
 - THEN it jumps to the note's ctime day
 
-### Requirement ANR-3: No-op on non-note active file
+### Requirement: ANR-3 No-op on non-note active file
 
 When the active file is not a Markdown note (null — settings/calendar leaf — or a non-`.md` attachment), the system MUST do nothing, preserving the current position.
 
@@ -60,7 +60,7 @@ When the active file is not a Markdown note (null — settings/calendar leaf —
 - WHEN an image attachment becomes active
 - THEN the position is unchanged
 
-### Requirement ANR-4: Manual navigation pauses follow
+### Requirement: ANR-4 Manual navigation pauses follow
 
 Manual navigation MUST pause auto-follow until a DIFFERENT note is opened; re-activating the same note MUST NOT resume.
 
@@ -76,7 +76,7 @@ Manual navigation MUST pause auto-follow until a DIFFERENT note is opened; re-ac
 - WHEN a different note becomes active
 - THEN auto-follow resumes and jumps to that note
 
-### Requirement ANR-5: Same-date guard
+### Requirement: ANR-5 Same-date guard
 
 If the resolved date equals the current selection (same day, no week mode), the system MUST skip the re-render, preventing redundant O(N) re-renders and the click-note feedback double-render.
 
@@ -86,7 +86,7 @@ If the resolved date equals the current selection (same day, no week mode), the 
 - WHEN clicking it fires `active-leaf-change`
 - THEN no re-render occurs
 
-### Requirement ANR-6: Preserve note list and daily-note creation
+### Requirement: ANR-6 Preserve note list and daily-note creation
 
 Existing behaviors MUST be preserved: clicking a list note still opens it; double-tap daily-note creation still creates/opens it and shows its day.
 
@@ -102,7 +102,7 @@ Existing behaviors MUST be preserved: clicking a list note still opens it; doubl
 - WHEN the user double-taps a date
 - THEN the daily note is created/opened and the calendar stays on that day
 
-### Requirement ANR-7: Verification and platform parity
+### Requirement: ANR-7 Verification and platform parity
 
 The feature MUST work on desktop and mobile/iPad, MUST NOT write or modify note data, and `npm run lint` and `npx tsc --noEmit` MUST pass.
 
@@ -111,3 +111,25 @@ The feature MUST work on desktop and mobile/iPad, MUST NOT write or modify note 
 - GIVEN a build from this change
 - WHEN the proposal's success criteria are checked
 - THEN all criteria pass with no lint or type errors
+
+### Requirement: ANR-8 View-open selection precedence
+
+On view open, selection MUST be resolved exactly once: if `followActiveNote` is on AND the active file is a Markdown note, the calendar MUST select that note's resolved day (follow wins); otherwise it MUST select today. The system MUST NOT select today and then jump to the note — no double-selection flash, no unexpected note jumps.
+
+#### Scenario: Follow wins on open
+
+- GIVEN follow on and an active note resolved to 2026-03-05
+- WHEN the view opens
+- THEN the calendar selects 2026-03-05 directly; today is never selected first
+
+#### Scenario: Follow off selects today
+
+- GIVEN follow off
+- WHEN the view opens
+- THEN today is selected and its notes list shows
+
+#### Scenario: Non-note active file
+
+- GIVEN follow on and the active file is null (settings/calendar leaf) or a non-`.md` attachment
+- WHEN the view opens
+- THEN today is selected
