@@ -71,7 +71,7 @@ export class CalendarView extends ItemView {
 	}
 
 	getIcon(): string {
-		return 'calendar-1';
+		return 'calendar-search';
 	}
 
 	onOpen(): Promise<void> {
