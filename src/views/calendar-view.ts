@@ -177,11 +177,6 @@ export class CalendarView extends ItemView {
 		// Create header with month/year and navigation
 		const header = mainContainer.createDiv('calendar-header');
 		
-		const todayButton = header.createEl('button', { attr: { 'aria-label': 'Go to today' } });
-		todayButton.addClass('calendar-nav-button', 'calendar-today-button');
-		setIcon(todayButton, 'calendar-1');
-		todayButton.onclick = () => this.goToToday();
-
 		this.monthDisplayContainer = header.createDiv('calendar-month-display');
 		this.monthDisplayButton = this.monthDisplayContainer.createEl('button', { cls: 'calendar-month-display-button' });
 		this.monthDisplayButton.type = 'button';
@@ -203,6 +198,10 @@ export class CalendarView extends ItemView {
 		const prevButton = navGroup.createEl('button', { text: '←' });
 		prevButton.addClass('calendar-nav-button');
 		prevButton.onclick = () => this.previousMonth();
+
+		const todayButton = navGroup.createEl('button', { text: 'Today', attr: { 'aria-label': 'Go to today' } });
+		todayButton.addClass('calendar-nav-button', 'calendar-today-button');
+		todayButton.onclick = () => this.goToToday();
 
 		const nextButton = navGroup.createEl('button', { text: '→' });
 		nextButton.addClass('calendar-nav-button');
