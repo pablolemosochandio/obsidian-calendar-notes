@@ -3,6 +3,7 @@ import type CalendarPlugin from '../main';
 import { formatDateTime } from '../settings';
 import { resolveNoteDate } from '../note-date';
 import { evaluateNoteColor } from '../note-rules';
+import { t, getMonths, getMonthsShort, getWeekdaysShort } from '../i18n';
 
 export const VIEW_TYPE_CALENDAR = 'calendar-view';
 
@@ -67,7 +68,7 @@ export class CalendarView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return 'Calendar';
+		return t('calendar');
 	}
 
 	getIcon(): string {
@@ -199,7 +200,7 @@ export class CalendarView extends ItemView {
 		prevButton.addClass('calendar-nav-button');
 		prevButton.onclick = () => this.previousMonth();
 
-		const todayButton = navGroup.createEl('button', { text: 'Today', attr: { 'aria-label': 'Go to today' } });
+		const todayButton = navGroup.createEl('button', { text: t('today'), attr: { 'aria-label': t('today_aria') } });
 		todayButton.addClass('calendar-nav-button', 'calendar-today-button');
 		todayButton.onclick = () => this.goToToday();
 
@@ -319,10 +320,11 @@ export class CalendarView extends ItemView {
 	}
 
 	private getDaysOfWeek(): string[] {
+		const weekdaysShort = getWeekdaysShort();
 		if (this.plugin.settings.weekStartDay === 'monday') {
-			return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+			return [weekdaysShort[1], weekdaysShort[2], weekdaysShort[3], weekdaysShort[4], weekdaysShort[5], weekdaysShort[6], weekdaysShort[0]];
 		}
-		return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+		return [weekdaysShort[0], weekdaysShort[1], weekdaysShort[2], weekdaysShort[3], weekdaysShort[4], weekdaysShort[5], weekdaysShort[6]];
 	}
 
 	private getVisibleWeekdays(): Array<{ label: string; absoluteDay: number; displayIndex: number }> {
@@ -332,27 +334,15 @@ export class CalendarView extends ItemView {
 	}
 
 	private getOrderedWeekdays(): Array<{ label: string; absoluteDay: number; displayIndex: number }> {
-		if (this.plugin.settings.weekStartDay === 'monday') {
-			return [
-				{ label: 'Mon', absoluteDay: 1, displayIndex: 0 },
-				{ label: 'Tue', absoluteDay: 2, displayIndex: 1 },
-				{ label: 'Wed', absoluteDay: 3, displayIndex: 2 },
-				{ label: 'Thu', absoluteDay: 4, displayIndex: 3 },
-				{ label: 'Fri', absoluteDay: 5, displayIndex: 4 },
-				{ label: 'Sat', absoluteDay: 6, displayIndex: 5 },
-				{ label: 'Sun', absoluteDay: 0, displayIndex: 6 },
-			];
-		}
-
-		return [
-			{ label: 'Sun', absoluteDay: 0, displayIndex: 0 },
-			{ label: 'Mon', absoluteDay: 1, displayIndex: 1 },
-			{ label: 'Tue', absoluteDay: 2, displayIndex: 2 },
-			{ label: 'Wed', absoluteDay: 3, displayIndex: 3 },
-			{ label: 'Thu', absoluteDay: 4, displayIndex: 4 },
-			{ label: 'Fri', absoluteDay: 5, displayIndex: 5 },
-			{ label: 'Sat', absoluteDay: 6, displayIndex: 6 },
-		];
+		const weekdaysShort = getWeekdaysShort();
+		const order = this.plugin.settings.weekStartDay === 'monday'
+			? [1, 2, 3, 4, 5, 6, 0]
+			: [0, 1, 2, 3, 4, 5, 6];
+		return order.map((absoluteDay, displayIndex) => ({
+			label: weekdaysShort[absoluteDay],
+			absoluteDay,
+			displayIndex,
+		}));
 	}
 
 	private isWeekdayVisible(absoluteDay: number): boolean {
@@ -510,9 +500,7 @@ export class CalendarView extends ItemView {
 
 	private renderMonthSelector(popover: HTMLElement) {
 		const grid = popover.createDiv('calendar-header-selector-grid');
-		const shortNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-			'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-		shortNames.forEach((month, index) => {
+		getMonthsShort().forEach((month, index) => {
 			const button = grid.createEl('button', {
 				cls: 'calendar-header-selector-option',
 				text: month,
@@ -591,7 +579,7 @@ export class CalendarView extends ItemView {
 			if (this.notesContainer) {
 				this.notesContainer.empty();
 				const emptyMsg = this.notesContainer.createDiv('calendar-notes-empty');
-				emptyMsg.setText('Select a date or week to view notes');
+				emptyMsg.setText(t('view_select_date'));
 			}
 			return;
 		}
@@ -610,11 +598,15 @@ export class CalendarView extends ItemView {
 		if (notes.length === 0) {
 			const emptyMsg = this.notesContainer.createDiv('calendar-notes-empty');
 			if (selectedWeekStart) {
-				emptyMsg.setText(`No notes for ${this.getWeekLabel(selectedWeekStart)}`);
+				emptyMsg.setText(t('view_no_notes_week', {
+					n: this.getWeekNumberForRow(selectedWeekStart),
+					start: this.formatDate(selectedWeekStart),
+					end: this.formatDate(this.getWeekEndDate(selectedWeekStart)),
+				}));
 			} else if (selectedDate) {
-				emptyMsg.setText(`No notes for ${this.formatDate(selectedDate)}`);
+				emptyMsg.setText(t('view_no_notes_date', { date: this.formatDate(selectedDate) }));
 			} else {
-				emptyMsg.setText('No notes found');
+				emptyMsg.setText(t('view_no_notes_found'));
 			}
 			return;
 		}
@@ -831,7 +823,7 @@ export class CalendarView extends ItemView {
 	}
 
 	private getQuarterLabel(date: Date): string {
-		return `Q${Math.floor(date.getMonth() / 3) + 1}`;
+		return t('quarter', { n: Math.floor(date.getMonth() / 3) + 1 });
 	}
 
 	private getCalendarRowStartDate(year: number, month: number, week: number, firstDayOffset: number): Date {
@@ -852,7 +844,11 @@ export class CalendarView extends ItemView {
 
 	private getWeekLabel(weekStartDate: Date): string {
 		const weekEndDate = this.getWeekEndDate(weekStartDate);
-		return `week ${this.getWeekNumberForRow(weekStartDate)} (${this.formatDate(weekStartDate)} to ${this.formatDate(weekEndDate)})`;
+		return t('week_label', {
+			n: this.getWeekNumberForRow(weekStartDate),
+			start: this.formatDate(weekStartDate),
+			end: this.formatDate(weekEndDate),
+		});
 	}
 
 	private getMonthName(month: number): string {
@@ -860,8 +856,7 @@ export class CalendarView extends ItemView {
 	}
 
 	private getMonthNames(): string[] {
-		return ['January', 'February', 'March', 'April', 'May', 'June',
-			'July', 'August', 'September', 'October', 'November', 'December'];
+		return [...getMonths()];
 	}
 
 	private handleDayTouch(event: PointerEvent, date: Date): void {
@@ -892,7 +887,7 @@ export class CalendarView extends ItemView {
 
 		const dailyNotesSettings = this.getDailyNotesCoreSettings();
 		if (!dailyNotesSettings.enabled) {
-			new Notice('Enable the Daily notes core plugin to create daily notes from the calendar.');
+			new Notice(t('view_daily_notes_disabled'));
 			return;
 		}
 
@@ -909,7 +904,7 @@ export class CalendarView extends ItemView {
 			}
 
 			if (existingFile) {
-				new Notice(`Unable to create daily note. A folder exists at ${notePath}.`);
+				new Notice(t('view_daily_note_folder_exists', { path: notePath }));
 				return;
 			}
 
@@ -929,7 +924,7 @@ export class CalendarView extends ItemView {
 			await this.app.workspace.getLeaf(false).openFile(createdFile);
 		} catch (error) {
 			console.error('Failed to create daily note from calendar:', error);
-			new Notice(`Could not create daily note for ${this.formatDate(date)}.`);
+			new Notice(t('view_daily_note_create_failed', { date: this.formatDate(date) }));
 		}
 	}
 
