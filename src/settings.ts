@@ -1,6 +1,6 @@
 import { App, ColorComponent, PluginSettingTab, Setting } from 'obsidian';
 import type CalendarPlugin from './main';
-import { t, setLanguage, type Language } from './i18n';
+import { t, setLanguage, getWeekdays, getWeekdaysShort, type Language } from './i18n';
 
 export type TimeDisplayFormat = string;
 export type WeekStartDay = 'monday' | 'sunday';
@@ -268,7 +268,7 @@ export function formatDateTime(date: Date, format: TimeDisplayFormat): string {
 	const minute = date.getMinutes();
 	const second = date.getSeconds();
 	const millisecond = date.getMilliseconds();
-	const meridiem = hour24 >= 12 ? 'PM' : 'AM';
+	const meridiem = hour24 >= 12 ? t('meridiem_pm') : t('meridiem_am');
 
 	const replacements: Record<string, string> = {
 		'YYYY': String(year),
@@ -322,16 +322,16 @@ export class CalendarSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Note list')
+			.setName(t('settings_section_note_list'))
 			.setHeading();
 
 		new Setting(containerEl)
-			.setName('Sort notes by')
-			.setDesc('Choose how notes are sorted in the note list.')
+			.setName(t('settings_sort_notes_by'))
+			.setDesc(t('settings_sort_notes_by_desc'))
 			.addDropdown(dropdown => dropdown
-				.addOption('name', 'Name')
-				.addOption('creation-time', 'Creation date/time')
-				.addOption('note-property', 'Note property')
+				.addOption('name', t('settings_sort_name'))
+				.addOption('creation-time', t('settings_sort_creation_time'))
+				.addOption('note-property', t('settings_sort_note_property'))
 				.setValue(this.plugin.settings.noteSortBy)
 				.onChange(async (value) => {
 					this.plugin.settings.noteSortBy = normalizeNoteSortBy(value);
@@ -344,10 +344,10 @@ export class CalendarSettingTab extends PluginSettingTab {
 		const noteDateSection = containerEl.createDiv({ cls: 'calendar-settings-nested-section' });
 
 		new Setting(noteDateSection)
-			.setName('Note date property')
-			.setDesc('Empty disables the property source.')
+			.setName(t('settings_note_date_property'))
+			.setDesc(t('settings_note_date_property_desc'))
 			.addText(text => text
-				.setPlaceholder('date')
+				.setPlaceholder(t('settings_note_date_property_placeholder'))
 				.setValue(this.plugin.settings.noteDateProperty)
 				.onChange(async (value) => {
 					this.plugin.settings.noteDateProperty = normalizeNoteDateProperty(value);
@@ -357,7 +357,7 @@ export class CalendarSettingTab extends PluginSettingTab {
 			);
 
 		const noteDateFormatSetting = new Setting(noteDateSection)
-			.setName('Note date format')
+			.setName(t('settings_note_date_format'))
 			.setDesc(this.buildDateFormatDesc(this.plugin.settings.noteDatePropertyFormat))
 			.addText(text => text
 				.setPlaceholder('DD-MM-YYYY')
@@ -372,11 +372,11 @@ export class CalendarSettingTab extends PluginSettingTab {
 		this.setSectionVisibility(noteDateSection, this.plugin.settings.noteSortBy === 'note-property');
 
 		new Setting(containerEl)
-			.setName('Sort order')
-			.setDesc('Choose whether notes are shown ascending or descending.')
+			.setName(t('settings_sort_order'))
+			.setDesc(t('settings_sort_order_desc'))
 			.addDropdown(dropdown => dropdown
-				.addOption('ascending', 'Ascending')
-				.addOption('descending', 'Descending')
+				.addOption('ascending', t('settings_sort_ascending'))
+				.addOption('descending', t('settings_sort_descending'))
 				.setValue(this.plugin.settings.noteSortOrder)
 				.onChange(async (value) => {
 					this.plugin.settings.noteSortOrder = normalizeSortOrder(value);
@@ -386,8 +386,8 @@ export class CalendarSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Show creation time')
-			.setDesc('Display note creation time.')
+			.setName(t('settings_show_time'))
+			.setDesc(t('settings_show_time_desc'))
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.showTime)
 				.onChange(async (value) => {
@@ -401,7 +401,7 @@ export class CalendarSettingTab extends PluginSettingTab {
 		const timeFormatSection = containerEl.createDiv({ cls: 'calendar-settings-nested-section' });
 
 		const timeFormatSetting = new Setting(timeFormatSection)
-			.setName('Time display format')
+			.setName(t('settings_time_format'))
 			.setDesc(this.buildTimeFormatDesc(this.plugin.settings.timeIsoDisplay))
 			.addText(text => text
 				.setPlaceholder('HH:mm:ss')
@@ -416,8 +416,8 @@ export class CalendarSettingTab extends PluginSettingTab {
 		this.setSectionVisibility(timeFormatSection, this.plugin.settings.showTime);
 
 		new Setting(containerEl)
-			.setName('Show excerpt')
-			.setDesc('Display a short preview of each note\'s content.')
+			.setName(t('settings_show_excerpt'))
+			.setDesc(t('settings_show_excerpt_desc'))
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.showExcerpt)
 				.onChange(async (value) => {
@@ -431,8 +431,8 @@ export class CalendarSettingTab extends PluginSettingTab {
 		const excerptSection = containerEl.createDiv({ cls: 'calendar-settings-nested-section' });
 
 		new Setting(excerptSection)
-			.setName('Excerpt lines')
-			.setDesc('Specify the maximum number of lines to show in note excerpts.')
+			.setName(t('settings_excerpt_lines'))
+			.setDesc(t('settings_excerpt_lines_desc'))
 			.addDropdown(dropdown => dropdown
 				.addOption('1', '1')
 				.addOption('2', '2')
@@ -449,8 +449,8 @@ export class CalendarSettingTab extends PluginSettingTab {
 		this.setSectionVisibility(excerptSection, this.plugin.settings.showExcerpt);
 
 		new Setting(containerEl)
-			.setName('Show tags')
-			.setDesc('Display a note\'s frontmatter tags as chips.')
+			.setName(t('settings_show_tags'))
+			.setDesc(t('settings_show_tags_desc'))
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.showTags)
 				.onChange(async (value) => {
@@ -461,14 +461,14 @@ export class CalendarSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Note color rules')
+			.setName(t('settings_section_color_rules'))
 			.setHeading();
 
 		let defaultColorPicker: ColorComponent | null = null;
 
 		new Setting(containerEl)
-			.setName('Default accent color')
-			.setDesc('Color used for notes no rule matches. Follows the theme accent until you pick a color.')
+			.setName(t('settings_default_accent_color'))
+			.setDesc(t('settings_default_accent_color_desc'))
 			.addColorPicker(picker => {
 				defaultColorPicker = picker;
 				picker
@@ -480,8 +480,8 @@ export class CalendarSettingTab extends PluginSettingTab {
 					});
 			})
 			.addButton(button => button
-				.setButtonText('Reset')
-				.setTooltip('Follow the theme accent')
+				.setButtonText(t('settings_reset'))
+				.setTooltip(t('settings_reset_tooltip'))
 				.onClick(async () => {
 					this.plugin.settings.defaultNoteAccentColor = '';
 					await this.plugin.saveSettings();
@@ -497,7 +497,7 @@ export class CalendarSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.addButton(button => button
-				.setButtonText('Add rule')
+				.setButtonText(t('settings_add_rule'))
 				.onClick(async () => {
 					this.plugin.settings.noteColorRules.push({
 						type: 'frontmatter',
@@ -512,12 +512,12 @@ export class CalendarSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Calendar display')
+			.setName(t('settings_section_calendar_display'))
 			.setHeading();
 
 		new Setting(containerEl)
-			.setName('Follow active note')
-			.setDesc('When enabled, the calendar jumps to and filters by the date of the note currently open in the editor. Manual navigation pauses following until a different note is opened.')
+			.setName(t('settings_follow_active_note'))
+			.setDesc(t('settings_follow_active_note_desc'))
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.followActiveNote)
 				.onChange(async (value) => {
@@ -528,11 +528,11 @@ export class CalendarSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Week starts on')
-			.setDesc('Choose the first day shown in each week.')
+			.setName(t('settings_week_starts_on'))
+			.setDesc(t('settings_week_starts_on_desc'))
 			.addDropdown(dropdown => dropdown
-				.addOption('sunday', 'Sunday')
-				.addOption('monday', 'Monday')
+				.addOption('sunday', t('settings_weekday_sunday'))
+				.addOption('monday', t('settings_weekday_monday'))
 				.setValue(this.plugin.settings.weekStartDay)
 				.onChange(async (value) => {
 					this.plugin.settings.weekStartDay = value === 'monday' ? 'monday' : 'sunday';
@@ -542,12 +542,12 @@ export class CalendarSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Week numbers')
-			.setDesc('Display week numbers in the calendar.')
+			.setName(t('settings_week_numbers'))
+			.setDesc(t('settings_week_numbers_desc'))
 			.addDropdown(dropdown => dropdown
-				.addOption('off', 'Off')
-				.addOption('iso-8601', 'ISO 8601')
-				.addOption('united-states', 'United States')
+				.addOption('off', t('settings_week_numbers_off'))
+				.addOption('iso-8601', t('settings_week_numbers_iso'))
+				.addOption('united-states', t('settings_week_numbers_us'))
 				.setValue(this.plugin.settings.weekNumberDisplay)
 				.onChange(async (value) => {
 					this.plugin.settings.weekNumberDisplay = normalizeWeekNumberDisplay(value);
@@ -557,19 +557,19 @@ export class CalendarSettingTab extends PluginSettingTab {
 			);
 
 		const dayVisibilitySetting = new Setting(containerEl)
-			.setName('Days to show')
-			.setDesc('Choose which weekdays are visible in the calendar.');
+			.setName(t('settings_days_to_show'))
+			.setDesc(t('settings_days_to_show_desc'));
 		dayVisibilitySetting.settingEl.addClass('calendar-days-setting');
 		dayVisibilitySetting.controlEl.empty();
 
 		const dayOptions: Array<{ key: WeekdayVisibilityKey; label: string; shortLabel: string }> = [
-			{ key: 'showSunday', label: 'Sunday', shortLabel: 'Sun' },
-			{ key: 'showMonday', label: 'Monday', shortLabel: 'Mon' },
-			{ key: 'showTuesday', label: 'Tuesday', shortLabel: 'Tue' },
-			{ key: 'showWednesday', label: 'Wednesday', shortLabel: 'Wed' },
-			{ key: 'showThursday', label: 'Thursday', shortLabel: 'Thu' },
-			{ key: 'showFriday', label: 'Friday', shortLabel: 'Fri' },
-			{ key: 'showSaturday', label: 'Saturday', shortLabel: 'Sat' },
+			{ key: 'showSunday', label: getWeekdays()[0], shortLabel: getWeekdaysShort()[0] },
+			{ key: 'showMonday', label: getWeekdays()[1], shortLabel: getWeekdaysShort()[1] },
+			{ key: 'showTuesday', label: getWeekdays()[2], shortLabel: getWeekdaysShort()[2] },
+			{ key: 'showWednesday', label: getWeekdays()[3], shortLabel: getWeekdaysShort()[3] },
+			{ key: 'showThursday', label: getWeekdays()[4], shortLabel: getWeekdaysShort()[4] },
+			{ key: 'showFriday', label: getWeekdays()[5], shortLabel: getWeekdaysShort()[5] },
+			{ key: 'showSaturday', label: getWeekdays()[6], shortLabel: getWeekdaysShort()[6] },
 		];
 
 		const syncDayCheckboxes = (checkboxes: Map<WeekdayVisibilityKey, HTMLInputElement>): void => {
@@ -603,10 +603,9 @@ export class CalendarSettingTab extends PluginSettingTab {
 				syncDayCheckboxes(dayCheckboxes);
 			};
 		});
-
 		new Setting(containerEl)
-			.setName('Show note indicators')
-			.setDesc('Display indicators on days that have notes.')
+			.setName(t('settings_show_note_indicators'))
+			.setDesc(t('settings_show_note_indicators_desc'))
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.showDashes)
 				.onChange(async (value) => {
@@ -621,12 +620,12 @@ export class CalendarSettingTab extends PluginSettingTab {
 		this.setSectionVisibility(thresholdSection, this.plugin.settings.showDashes);
 
 		thresholdSection.createEl('p', {
-			text: 'Set the minimum number of notes required for each indicator level.',
+			text: t('settings_threshold_desc'),
 			cls: 'setting-item-description',
 		});
 
 		new Setting(thresholdSection)
-			.setName('1 indicator')
+			.setName(t('settings_indicator_1'))
 			.addText(text => text
 				.setPlaceholder('1')
 				.setValue(String(this.plugin.settings.dashOneThreshold))
@@ -641,7 +640,7 @@ export class CalendarSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(thresholdSection)
-			.setName('2 indicators')
+			.setName(t('settings_indicator_2'))
 			.addText(text => text
 				.setPlaceholder('3')
 				.setValue(String(this.plugin.settings.dashTwoThreshold))
@@ -656,7 +655,7 @@ export class CalendarSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(thresholdSection)
-			.setName('3 indicators')
+			.setName(t('settings_indicator_3'))
 			.addText(text => text
 				.setPlaceholder('5')
 				.setValue(String(this.plugin.settings.dashThreeThreshold))
@@ -669,9 +668,10 @@ export class CalendarSettingTab extends PluginSettingTab {
 					}
 				})
 			);
+
 		new Setting(containerEl)
-			.setName('Create daily note on double-click/tap')
-			.setDesc('When enabled, double-clicking or double-tapping a date creates or opens that day\'s daily note. The Daily Notes core plugin is required.')
+			.setName(t('settings_daily_note_double_tap'))
+			.setDesc(t('settings_daily_note_double_tap_desc'))
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.enableDailyNoteOnDoubleTap)
 				.onChange(async (value) => {
@@ -698,8 +698,8 @@ export class CalendarSettingTab extends PluginSettingTab {
 		row.settingEl.addClass('calendar-rule-row');
 
 		row.addDropdown(dropdown => dropdown
-			.addOption('frontmatter', 'Property')
-			.addOption('tag', 'Tag')
+			.addOption('frontmatter', t('settings_rule_property'))
+			.addOption('tag', t('settings_rule_tag'))
 			.setValue(rule.type)
 			.onChange(async (value) => {
 				rule.type = value === 'tag' ? 'tag' : 'frontmatter';
@@ -711,7 +711,7 @@ export class CalendarSettingTab extends PluginSettingTab {
 
 		if (rule.type === 'frontmatter') {
 			row.addText(text => text
-				.setPlaceholder('key')
+				.setPlaceholder(t('settings_rule_key_placeholder'))
 				.setValue(rule.key)
 				.onChange(async (value) => {
 					rule.key = value;
@@ -721,7 +721,7 @@ export class CalendarSettingTab extends PluginSettingTab {
 		}
 
 		row.addText(text => text
-			.setPlaceholder(rule.type === 'tag' ? 'tag name (wildcards: *)' : 'value')
+			.setPlaceholder(rule.type === 'tag' ? t('settings_rule_tag_placeholder') : t('settings_rule_value_placeholder'))
 			.setValue(rule.value)
 			.onChange(async (value) => {
 				rule.value = value;
@@ -739,7 +739,7 @@ export class CalendarSettingTab extends PluginSettingTab {
 
 		row.addExtraButton(button => button
 			.setIcon('chevron-up')
-			.setTooltip('Move rule up')
+			.setTooltip(t('settings_rule_move_up'))
 			.setDisabled(index === 0)
 			.onClick(async () => {
 				[rules[index - 1], rules[index]] = [rules[index], rules[index - 1]];
@@ -751,7 +751,7 @@ export class CalendarSettingTab extends PluginSettingTab {
 
 		row.addExtraButton(button => button
 			.setIcon('chevron-down')
-			.setTooltip('Move rule down')
+			.setTooltip(t('settings_rule_move_down'))
 			.setDisabled(index === rules.length - 1)
 			.onClick(async () => {
 				[rules[index + 1], rules[index]] = [rules[index], rules[index + 1]];
@@ -763,7 +763,7 @@ export class CalendarSettingTab extends PluginSettingTab {
 
 		row.addExtraButton(button => button
 			.setIcon('trash-2')
-			.setTooltip('Remove rule')
+			.setTooltip(t('settings_rule_remove'))
 			.onClick(async () => {
 				rules.splice(index, 1);
 				this.renderRuleRows(rulesContainer);
@@ -783,12 +783,14 @@ export class CalendarSettingTab extends PluginSettingTab {
 
 	private buildRuleFeedback(rule: NoteColorRule, index: number): string {
 		if (!isCompleteNoteColorRule(rule)) {
-			return rule.type === 'tag' ? 'Value is required' : 'Key and value are required';
+			return rule.type === 'tag'
+				? t('settings_rule_value_required')
+				: t('settings_rule_key_value_required');
 		}
 
 		const earlierMatchIndex = this.findEarlierMatchingRule(rule, index);
 		if (earlierMatchIndex !== null) {
-			return `Never applies — earlier rule #${earlierMatchIndex + 1} matches`;
+			return t('settings_rule_never_applies', { n: earlierMatchIndex + 1 });
 		}
 
 		return '';
@@ -831,11 +833,11 @@ export class CalendarSettingTab extends PluginSettingTab {
 	private buildTimeFormatDesc(format: TimeDisplayFormat): string {
 		const now = new Date();
 		const preview = formatDateTime(now, format);
-		return `Example: HH:mm, hh:mm:ss aa, YYYY-MM-DD. Preview: ${preview}`;
+		return `${t('settings_example')} HH:mm, hh:mm:ss aa, YYYY-MM-DD. ${t('settings_preview')} ${preview}`;
 	}
 
 	private buildDateFormatDesc(format: string): string {
 		const preview = formatDateTime(new Date(), format);
-		return `Example: DD-MM-YYYY, YYYY-MM-DD. Preview: ${preview}`;
+		return `${t('settings_example')} DD-MM-YYYY, YYYY-MM-DD. ${t('settings_preview')} ${preview}`;
 	}
 }
