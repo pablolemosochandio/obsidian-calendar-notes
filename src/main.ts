@@ -8,6 +8,7 @@ import {
 	normalizeDefaultNoteAccentColor,
 	normalizeExcerptLines,
 	normalizeFollowActiveNote,
+	normalizeLanguage,
 	normalizeNoteColorRules,
 	normalizeNoteSortBy,
 	normalizeNoteDateProperty,
@@ -18,12 +19,14 @@ import {
 	normalizeTimeDisplayFormat,
 	normalizeWeekdayVisibility,
 } from './settings';
+import { t, setLanguage } from './i18n';
 
 export default class CalendarPlugin extends Plugin {
 	settings!: CalendarPluginSettings;
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
+		setLanguage(this.settings.language);
 
 		// Register the calendar view
 		this.registerView(
@@ -35,14 +38,14 @@ export default class CalendarPlugin extends Plugin {
 		this.addSettingTab(new CalendarSettingTab(this.app, this));
 
 		// Add a ribbon icon to open the calendar view
-		this.addRibbonIcon('calendar-glyph', 'Open calendar', async () => {
+		this.addRibbonIcon('calendar-glyph', t('main_open_calendar'), async () => {
 			await this.activateView();
 		});
 
 		// Add a command to open the calendar
 		this.addCommand({
 			id: 'open-calendar',
-			name: 'Open calendar',
+			name: t('main_open_calendar'),
 			callback: async () => {
 				await this.activateView();
 			}
@@ -73,6 +76,7 @@ export default class CalendarPlugin extends Plugin {
 		this.settings.noteColorRules = normalizeNoteColorRules(this.settings.noteColorRules);
 		this.settings.defaultNoteAccentColor = normalizeDefaultNoteAccentColor(this.settings.defaultNoteAccentColor);
 		this.settings.weekNumberDisplay = normalizeWeekNumberDisplay(this.settings.weekNumberDisplay ?? '');
+		this.settings.language = normalizeLanguage(this.settings.language);
 		normalizeWeekdayVisibility(this.settings);
 	}
 

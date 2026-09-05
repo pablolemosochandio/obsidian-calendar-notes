@@ -100,7 +100,7 @@ export const es = {
 	settings_daily_note_double_tap: 'Crear nota diaria al hacer doble clic/toque',
 	settings_daily_note_double_tap_desc: 'Cuando está habilitado, hacer doble clic o tocar dos veces una fecha crea o abre la nota diaria de ese día. Se requiere el complemento principal de notas diarias.',
 	settings_language: 'Idioma',
-	settings_language_desc: 'Idioma de visualización de la interfaz del complemento.',
+	settings_language_desc: 'Idioma de visualización de la interfaz del complemento. Las etiquetas de comandos y de la cinta se actualizan al recargar el complemento.',
 	language_en: 'English',
 	language_es: 'Español',
 } satisfies TranslationShape;

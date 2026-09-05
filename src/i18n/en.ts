@@ -99,7 +99,7 @@ export const en = {
 	settings_daily_note_double_tap: 'Create daily note on double-click/tap',
 	settings_daily_note_double_tap_desc: "When enabled, double-clicking or double-tapping a date creates or opens that day's daily note. The Daily Notes core plugin is required.",
 	settings_language: 'Language',
-	settings_language_desc: 'Display language for the plugin interface.',
+	settings_language_desc: 'Display language for the plugin interface. Command and ribbon labels update after reloading the plugin.',
 	language_en: 'English',
 	language_es: 'Español',
 } as const;
