@@ -1,5 +1,6 @@
 import { App, ColorComponent, PluginSettingTab, Setting } from 'obsidian';
 import type CalendarPlugin from './main';
+import { t, setLanguage, type Language } from './i18n';
 
 export type TimeDisplayFormat = string;
 export type WeekStartDay = 'monday' | 'sunday';
@@ -36,6 +37,7 @@ const WEEKDAY_VISIBILITY_KEYS: WeekdayVisibilityKey[] = [
 ];
 
 export interface CalendarPluginSettings {
+	language: Language;
 	showDashes: boolean;
 	enableDailyNoteOnDoubleTap: boolean;
 	followActiveNote: boolean;
@@ -65,6 +67,7 @@ export interface CalendarPluginSettings {
 }
 
 export const DEFAULT_SETTINGS: CalendarPluginSettings = {
+	language: 'es',
 	showDashes: true,
 	enableDailyNoteOnDoubleTap: true,
 	followActiveNote: false,
@@ -233,6 +236,10 @@ export function normalizeSortOrder(value: string): SortOrder {
 	return value === 'descending' ? 'descending' : 'ascending';
 }
 
+export function normalizeLanguage(value: unknown): Language {
+	return value === 'en' ? 'en' : 'es';
+}
+
 export function normalizeWeekdayVisibility(settings: CalendarPluginSettings): void {
 	WEEKDAY_VISIBILITY_KEYS.forEach((key) => {
 		settings[key] = settings[key] !== false;
@@ -298,6 +305,21 @@ export class CalendarSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
+
+		new Setting(containerEl)
+			.setName(t('settings_language'))
+			.setDesc(t('settings_language_desc'))
+			.addDropdown(dropdown => dropdown
+				.addOption('en', t('language_en'))
+				.addOption('es', t('language_es'))
+				.setValue(this.plugin.settings.language)
+				.onChange(async (value) => {
+					this.plugin.settings.language = normalizeLanguage(value);
+					setLanguage(this.plugin.settings.language);
+					await this.plugin.saveSettings();
+					this.plugin.refreshCalendarView();
+				})
+			);
 
 		new Setting(containerEl)
 			.setName('Note list')
