@@ -1,0 +1,110 @@
+// English locale dictionary — source of truth for the translation key set.
+// `es.ts` is typed against this shape so `tsc` catches any missing key.
+
+export const en = {
+	// Core / navigation
+	today: 'Today',
+	today_aria: 'Go to today',
+	calendar: 'Calendar',
+	meridiem_am: 'AM',
+	meridiem_pm: 'PM',
+
+	// Templates
+	quarter: 'Q{n}',
+	week_label: 'week {n} ({start} to {end})',
+
+	// Localized name arrays (indexed by 0 = January / Sunday)
+	months: ['January', 'February', 'March', 'April', 'May', 'June',
+		'July', 'August', 'September', 'October', 'November', 'December'],
+	monthsShort: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+		'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+	weekdays: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+	weekdaysShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+
+	// Calendar view
+	view_select_date: 'Select a date or week to view notes',
+	view_no_notes_week: 'No notes for week {n} ({start} to {end})',
+	view_no_notes_date: 'No notes for {date}',
+	view_no_notes_found: 'No notes found',
+	view_daily_notes_disabled: 'Enable the Daily notes core plugin to create daily notes from the calendar.',
+	view_daily_note_folder_exists: 'Unable to create daily note. A folder exists at {path}.',
+	view_daily_note_create_failed: 'Could not create daily note for {date}.',
+
+	// Main entrypoint
+	main_open_calendar: 'Open calendar',
+
+	// Settings
+	settings_section_note_list: 'Note list',
+	settings_sort_notes_by: 'Sort notes by',
+	settings_sort_notes_by_desc: 'Choose how notes are sorted in the note list.',
+	settings_sort_name: 'Name',
+	settings_sort_creation_time: 'Creation date/time',
+	settings_sort_note_property: 'Note property',
+	settings_note_date_property: 'Note date property',
+	settings_note_date_property_desc: 'Empty disables the property source.',
+	settings_note_date_property_placeholder: 'date',
+	settings_note_date_format: 'Note date format',
+	settings_example: 'Example:',
+	settings_preview: 'Preview:',
+	settings_sort_order: 'Sort order',
+	settings_sort_order_desc: 'Choose whether notes are shown ascending or descending.',
+	settings_sort_ascending: 'Ascending',
+	settings_sort_descending: 'Descending',
+	settings_show_time: 'Show creation time',
+	settings_show_time_desc: 'Display note creation time.',
+	settings_time_format: 'Time display format',
+	settings_show_excerpt: 'Show excerpt',
+	settings_show_excerpt_desc: "Display a short preview of each note's content.",
+	settings_excerpt_lines: 'Excerpt lines',
+	settings_excerpt_lines_desc: 'Specify the maximum number of lines to show in note excerpts.',
+	settings_show_tags: 'Show tags',
+	settings_show_tags_desc: "Display a note's frontmatter tags as chips.",
+	settings_section_color_rules: 'Note color rules',
+	settings_default_accent_color: 'Default accent color',
+	settings_default_accent_color_desc: 'Color used for notes no rule matches. Follows the theme accent until you pick a color.',
+	settings_reset: 'Reset',
+	settings_reset_tooltip: 'Follow the theme accent',
+	settings_add_rule: 'Add rule',
+	settings_rule_property: 'Property',
+	settings_rule_tag: 'Tag',
+	settings_rule_key_placeholder: 'key',
+	settings_rule_tag_placeholder: 'tag name (wildcards: *)',
+	settings_rule_value_placeholder: 'value',
+	settings_rule_move_up: 'Move rule up',
+	settings_rule_move_down: 'Move rule down',
+	settings_rule_remove: 'Remove rule',
+	settings_rule_value_required: 'Value is required',
+	settings_rule_key_value_required: 'Key and value are required',
+	settings_rule_never_applies: 'Never applies — earlier rule #{n} matches',
+	settings_section_calendar_display: 'Calendar display',
+	settings_follow_active_note: 'Follow active note',
+	settings_follow_active_note_desc: 'When enabled, the calendar jumps to and filters by the date of the note currently open in the editor. Manual navigation pauses following until a different note is opened.',
+	settings_week_starts_on: 'Week starts on',
+	settings_week_starts_on_desc: 'Choose the first day shown in each week.',
+	settings_weekday_sunday: 'Sunday',
+	settings_weekday_monday: 'Monday',
+	settings_week_numbers: 'Week numbers',
+	settings_week_numbers_desc: 'Display week numbers in the calendar.',
+	settings_week_numbers_off: 'Off',
+	settings_week_numbers_iso: 'ISO 8601',
+	settings_week_numbers_us: 'United States',
+	settings_days_to_show: 'Days to show',
+	settings_days_to_show_desc: 'Choose which weekdays are visible in the calendar.',
+	settings_show_note_indicators: 'Show note indicators',
+	settings_show_note_indicators_desc: 'Display indicators on days that have notes.',
+	settings_threshold_desc: 'Set the minimum number of notes required for each indicator level.',
+	settings_indicator_1: '1 indicator',
+	settings_indicator_2: '2 indicators',
+	settings_indicator_3: '3 indicators',
+	settings_daily_note_double_tap: 'Create daily note on double-click/tap',
+	settings_daily_note_double_tap_desc: "When enabled, double-clicking or double-tapping a date creates or opens that day's daily note. The Daily Notes core plugin is required.",
+	settings_language: 'Language',
+	settings_language_desc: 'Display language for the plugin interface.',
+	language_en: 'English',
+	language_es: 'Español',
+} as const;
+
+export type TranslationKey = keyof typeof en;
+
+// A translation entry is either a user-visible string or a localized name array.
+export type TranslationShape = { [K in TranslationKey]: string | readonly string[] };
