@@ -4,7 +4,7 @@
   "version": "1.0.3",
   "minAppVersion": "1.4.0",
   "description": "Displays a sidebar calendar and notes created on the selected date or week, with iPad trackpad support.",
-  "author": "Travis Cochran",
+  "author": "Pablo Lemos",
   "authorUrl": "https://github.com/tcatlas/",
   "isDesktopOnly": false
 }
