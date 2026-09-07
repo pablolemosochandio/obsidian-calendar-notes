@@ -20,7 +20,7 @@ Gotchas:
 
 ## Vault install / testing in Obsidian
 
-Build output is `build/` (gitignored): `main.js`, `styles.css`, `manifest.json` — the last two copied from `src/styles.css` and the root `manifest.json`. Copy or symlink `build/` to `<vault>/.obsidian/plugins/notes-calendar/`, then reload Obsidian (or disable/enable the plugin). User settings are stored by Obsidian in `data.json` (gitignored).
+Build output is `build/` (gitignored): `main.js`, `styles.css`, `manifest.json` — the last two copied from `src/styles.css` and the root `manifest.json`. Copy or symlink `build/` to `<vault>/.obsidian/plugins/calendar-notes/`, then reload Obsidian (or disable/enable the plugin). User settings are stored by Obsidian in `data.json` (gitignored).
 
 ## Architecture
 

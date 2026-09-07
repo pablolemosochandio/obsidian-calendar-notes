@@ -39,7 +39,7 @@ Open the Community Plugins tab in the settings and search for "Calendar Notes" (
 	Example layout:
 	
 	```text
-	<your-vault>/.obsidian/plugins/notes-calendar/
+	<your-vault>/.obsidian/plugins/calendar-notes/
 		manifest.json
 		main.js
 		styles.css

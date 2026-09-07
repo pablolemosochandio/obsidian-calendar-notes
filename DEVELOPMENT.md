@@ -20,7 +20,7 @@ npm run dev
 <your-vault>/.obsidian/plugins/calendar-notes/
 ```
 
-6. In Obsidian, open `Settings -> Community plugins`, enable community plugins if needed, then enable `Notes Calendar`.
+6. In Obsidian, open `Settings -> Community plugins`, enable community plugins if needed, then enable `Calendar Notes`.
 
 ## Build Commands
 
