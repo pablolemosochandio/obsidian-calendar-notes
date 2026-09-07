@@ -1,6 +1,6 @@
 {
-  "name": "notes-calendar",
-  "version": "1.0.3",
+  "name": "calendar-notes",
+  "version": "1.0.0",
   "description": "An Obsidian plugin that displays a sidebar calendar and notes created on selected dates or weeks.",
   "main": "main.js",
   "scripts": {
@@ -15,16 +15,16 @@
     "obsidian-plugin",
     "calendar"
   ],
-  "author": "Pablo Lemos",
+  "author": "Pablo Lemos Ochandio",
   "license": "GPL-3.0-only",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tcatlas/ObsidianCalendar.git"
+    "url": "git+https://github.com/pablolemosochandio/ObsidianCalendar.git"
   },
   "bugs": {
-    "url": "https://github.com/tcatlas/ObsidianCalendar/issues"
+    "url": "https://github.com/pablolemosochandio/ObsidianCalendar/issues"
   },
-  "homepage": "https://github.com/tcatlas/ObsidianCalendar#readme",
+  "homepage": "https://github.com/pablolemosochandio/ObsidianCalendar#readme",
   "devDependencies": {
     "@eslint/js": "^9.0.0",
     "@types/node": "^22.0.0",
