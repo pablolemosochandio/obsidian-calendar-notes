@@ -21,12 +21,10 @@ An Obsidian plugin for displaying a calendar in the side pane and notes associat
 - Special attention taken for iPad trackpad support
 
 ## Installation
-Copy the plugin in the directory .obsidan/plugins/calendar-notes
 
-<details>
-  <summary>Manual installation</summary>
+### Manual installation
 
-  ## Installing in a Vault
+  #### Installing in a Vault
 
 	For a manual local install, make sure these files exist inside your plugin folder in the vault:
 	
@@ -46,8 +44,6 @@ Copy the plugin in the directory .obsidan/plugins/calendar-notes
 	```
 	
 	After copying the files, reload Obsidian or disable and re-enable the plugin.
-</details>
-
 
 ## Notes
 
