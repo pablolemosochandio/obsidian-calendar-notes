@@ -3,7 +3,8 @@
 An Obsidian plugin for displaying a calendar in the side pane and notes associated with the selected date.
 
 ## Screenshots
-![[scrrenshot/screenshot.png]]
+
+<a/ href="https://github.com/pablolemosochandio/obsidian-calendar-notes/blob/main/screenshot/screenshot.png">
 
 
 ## Features
