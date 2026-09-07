@@ -24,26 +24,26 @@ An Obsidian plugin for displaying a calendar in the side pane and notes associat
 
 ### Manual installation
 
-  #### Installing in a Vault
+#### Installing in a Vault
 
-	For a manual local install, make sure these files exist inside your plugin folder in the vault:
+For a manual local install, make sure these files exist inside your plugin folder in the vault:
 	
-	- `manifest.json`
-	- `main.js`
-	- `styles.css`
+- `manifest.json`
+- `main.js`
+- `styles.css`
 	
-	After building, these files are located in the `build/` directory (`main.js` and `styles.css`) and the project root (`manifest.json`).
+After building, these files are located in the `build/` directory (`main.js` and `styles.css`) and the project root (`manifest.json`).
 	
-	Example layout:
+Example layout:
 	
-	```text
+```text
 	<your-vault>/.obsidian/plugins/calendar-notes/
 		manifest.json
 		main.js
 		styles.css
-	```
+```
 	
-	After copying the files, reload Obsidian or disable and re-enable the plugin.
+After copying the files, reload Obsidian or disable and re-enable the plugin.
 
 ## Notes
 
