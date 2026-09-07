@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Obsidian plugin **Notes Calendar** (`notes-calendar`, GPL-3.0, `isDesktopOnly: false` — desktop, mobile and iPad). TypeScript source bundled by esbuild into a single `main.js`. **There are no tests in this repo**; verification is lint + typecheck + manual build.
+Obsidian plugin **Calendar Notes** (`calendar-notes`, GPL-3.0, `isDesktopOnly: false` — desktop, mobile and iPad). TypeScript source bundled by esbuild into a single `main.js`. **There are no tests in this repo**; verification is lint + typecheck + manual build.
 
 ## Commands
 
@@ -45,8 +45,8 @@ Build output is `build/` (gitignored): `main.js`, `styles.css`, `manifest.json` 
 - Version bumps are manual and touch **both** `manifest.json` and `package.json` together (`chore: bump version`).
 - Releases are tag-driven: pushing any tag runs CI (`npm ci && npm run lint && npm run build`), attests `main.js`/`styles.css` provenance, and creates a **draft** GitHub release with `main.js`, `manifest.json`, `styles.css`. The tag, not the manifest version, names the release.
 - ESLint treats `no-explicit-any`, `no-unused-vars`, and `explicit-module-boundary-types` as warnings, not errors; `build/**` is ignored.
-- `package.json`'s `repository`/`homepage` still point at the stale `tcatlas/ObsidianCalendar` while the real remote is `tcatlas/obsidian-notes-calendar` — don't "fix" it inside unrelated work.
-
+- `package.json`'s `repository`/`homepage` still point at the stale `pablolemosochandio/ObsidianCalendar` while the real remote is `pablolemosochandio/obsidian-calendar-notes` — don't "fix" it inside unrelated work.
 
 ## DEVELOPMENT
+
 @DEVELOPMENT.md

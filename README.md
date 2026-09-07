@@ -1,4 +1,4 @@
-# Notes Calendar
+# Calendar Notes
 
 An Obsidian plugin for displaying a calendar in the side pane and notes associated with the selected date.
 

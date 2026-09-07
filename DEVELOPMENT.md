@@ -17,7 +17,7 @@ npm run dev
 5. Copy or symlink the `build/` directory into your vault as the plugin folder:
 
 ```text
-<your-vault>/.obsidian/plugins/notes-calendar/
+<your-vault>/.obsidian/plugins/calendar-notes/
 ```
 
 6. In Obsidian, open `Settings -> Community plugins`, enable community plugins if needed, then enable `Notes Calendar`.
@@ -206,9 +206,9 @@ Gestiona la interfaz de usuario dividida en paneles (`WorkspaceLeaf`).
   
   ```
 
-## 4. Análisis Profundo del Plugin Objetivo: `obsidian-notes-calendar`
+## 4. Análisis Profundo del Plugin Objetivo: `obsidian-calendar-notes`
 
-### 4.1 Características Clave del Plugin de `tcatlas`
+### 4.1 Características Clave del Plugin de `pablolemosochandio`
 
 1. **Tipo de Mapeo:** Agrupa las notas según la fecha de creación real del archivo en disco (`ctime` - `file.stat.ctime`), no necesariamente por el nombre del archivo ni por campos de YAML frontmatter.
 2. **Vista de Panel Lateral:** Registra una vista personalizada en el panel lateral (sidebar) que renderiza un calendario mensual/semanal.
@@ -228,13 +228,13 @@ Regla de formato (fácil de violar):
 - **No convertir la bóveda a `DD/MM/YYYY`**: Obsidian reescribiría el valor a ISO en la siguiente edición y se rompe la interoperabilidad (Dataview, Tasks, plantillas).
 - En plantillas, para propiedades de tipo `Date` usar `{{date:YYYY-MM-DD}}`.
 
-### 4.2 Estrategias de Extensión del Agente para `obsidian-notes-calendar`
+### 4.2 Estrategias de Extensión del Agente para `obsidian-calendar-notes`
 
-Para construir un plugin que amplíe `obsidian-notes-calendar`, el agente de IA puede utilizar tres enfoques arquitectónicos:
+Para construir un plugin que amplíe `obsidian-calendar-notes`, el agente de IA puede utilizar tres enfoques arquitectónicos:
 
 #### Estrategia A: Intercepción DOM y Observador de Eventos (UI Overlay)
 
-Si se desea añadir badges, iconos adicionales o botones de acción dentro del calendario renderizado por `notes-calendar`:
+Si se desea añadir badges, iconos adicionales o botones de acción dentro del calendario renderizado por `calendar-notes`:
 
 ```
 this.registerEvent(
@@ -259,7 +259,7 @@ this.registerEvent(
 
 #### Estrategia B: Extensión basada en `MetadataCache` y Agrupación por `ctime`
 
-Para replicar o complementar la lógica de agrupación por fechas de creación (`ctime`) que usa `notes-calendar`:
+Para replicar o complementar la lógica de agrupación por fechas de creación (`ctime`) que usa `calendar-notes`:
 
 ```
 import { TFile } from 'obsidian';
