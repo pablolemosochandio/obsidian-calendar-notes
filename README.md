@@ -4,7 +4,7 @@ An Obsidian plugin for displaying a calendar in the side pane and notes associat
 
 ## Screenshots
 
-![screenshot|250](screenshot/screenshot.png)
+<img src="screeshot/screenshot.png" width="300">
 
 
 ## Features
