@@ -4,7 +4,7 @@ An Obsidian plugin for displaying a calendar in the side pane and notes associat
 
 ## Screenshots
 
-<img src="screeshot/screenshot.png" width="300">
+<img src="https://github.com/pablolemosochandio/obsidian-calendar-notes/blob/main/screenshot/screenshot.png" width="300">
 
 
 ## Features
