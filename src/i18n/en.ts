@@ -46,8 +46,6 @@ export const en = {
 	settings_note_date_format: 'Note date format',
 	settings_example: 'Example:',
 	settings_preview: 'Preview:',
-	settings_sort_order: 'Sort order',
-	settings_sort_order_desc: 'Choose whether notes are shown ascending or descending.',
 	settings_sort_ascending: 'Ascending',
 	settings_sort_descending: 'Descending',
 	settings_show_time: 'Show creation time',
@@ -102,6 +100,19 @@ export const en = {
 	settings_language_desc: 'Display language for the plugin interface. Command and ribbon labels update after reloading the plugin.',
 	language_en: 'English',
 	language_es: 'Español',
+
+	// Filtered notes sorting
+	settings_enable_filtered_note_sorting: 'Enable filtered notes sorting',
+	settings_enable_filtered_note_sorting_desc: 'When enabled, filtered notes are sorted using advanced options below.',
+	settings_filtered_note_sort_order: 'Sort order (filtered notes)',
+	settings_filtered_note_sort_order_desc: 'Choose whether filtered notes are sorted ascending or descending.',
+	settings_filtered_note_sort_type: 'Sort type',
+	settings_filtered_note_sort_type_desc: 'Choose how filtered notes are sorted.',
+	settings_filtered_note_sort_by_date: 'By date',
+	settings_filtered_note_sort_by_attribute: 'By attribute',
+	settings_filtered_note_sort_attribute: 'Sort attribute',
+	settings_filtered_note_sort_attribute_desc: 'Enter the frontmatter property name to sort by.',
+	settings_filtered_note_sort_attribute_placeholder: 'property name',
 } as const;
 
 export type TranslationKey = keyof typeof en;

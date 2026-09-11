@@ -7,6 +7,8 @@ import {
 	isCompleteNoteColorRule,
 	normalizeDefaultNoteAccentColor,
 	normalizeExcerptLines,
+	normalizeFilteredNoteSortAttribute,
+	normalizeFilteredNoteSortType,
 	normalizeFollowActiveNote,
 	normalizeLanguage,
 	normalizeNoteColorRules,
@@ -70,9 +72,12 @@ export default class CalendarPlugin extends Plugin {
 		this.settings.excerptLines = normalizeExcerptLines(this.settings.excerptLines ?? DEFAULT_SETTINGS.excerptLines);
 		this.settings.showTags = normalizeShowTags(this.settings.showTags);
 		this.settings.noteSortBy = normalizeNoteSortBy(this.settings.noteSortBy ?? '');
-		this.settings.noteSortOrder = normalizeSortOrder(this.settings.noteSortOrder ?? '');
 		this.settings.noteDateProperty = normalizeNoteDateProperty(this.settings.noteDateProperty ?? '');
 		this.settings.noteDatePropertyFormat = normalizeNoteDatePropertyFormat(this.settings.noteDatePropertyFormat ?? '');
+		this.settings.enableFilteredNoteSorting = this.settings.enableFilteredNoteSorting === true;
+		this.settings.filteredNoteSortOrder = normalizeSortOrder(this.settings.filteredNoteSortOrder ?? '');
+		this.settings.filteredNoteSortType = normalizeFilteredNoteSortType(this.settings.filteredNoteSortType ?? '');
+		this.settings.filteredNoteSortAttribute = normalizeFilteredNoteSortAttribute(this.settings.filteredNoteSortAttribute ?? '');
 		this.settings.noteColorRules = normalizeNoteColorRules(this.settings.noteColorRules);
 		this.settings.defaultNoteAccentColor = normalizeDefaultNoteAccentColor(this.settings.defaultNoteAccentColor);
 		this.settings.weekNumberDisplay = normalizeWeekNumberDisplay(this.settings.weekNumberDisplay ?? '');

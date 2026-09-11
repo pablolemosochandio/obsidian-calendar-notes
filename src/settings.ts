@@ -7,6 +7,7 @@ export type WeekStartDay = 'monday' | 'sunday';
 export type WeekNumberDisplay = 'off' | 'iso-8601' | 'united-states';
 export type NoteSortBy = 'name' | 'creation-time' | 'note-property';
 export type SortOrder = 'ascending' | 'descending';
+export type FilteredNoteSortType = 'by-date' | 'by-attribute';
 export type NoteColorRuleType = 'frontmatter' | 'tag';
 
 export interface NoteColorRule {
@@ -50,9 +51,12 @@ export interface CalendarPluginSettings {
 	showTags: boolean;
 	excerptLines: number;
 	noteSortBy: NoteSortBy;
-	noteSortOrder: SortOrder;
 	noteDateProperty: string;
 	noteDatePropertyFormat: string;
+	enableFilteredNoteSorting: boolean;
+	filteredNoteSortOrder: SortOrder;
+	filteredNoteSortType: FilteredNoteSortType;
+	filteredNoteSortAttribute: string;
 	noteColorRules: NoteColorRule[];
 	defaultNoteAccentColor: string;
 	weekStartDay: WeekStartDay;
@@ -80,9 +84,12 @@ export const DEFAULT_SETTINGS: CalendarPluginSettings = {
 	showTags: true,
 	excerptLines: 2,
 	noteSortBy: 'creation-time',
-	noteSortOrder: 'ascending',
 	noteDateProperty: '',
 	noteDatePropertyFormat: 'DD-MM-YYYY',
+	enableFilteredNoteSorting: false,
+	filteredNoteSortOrder: 'ascending',
+	filteredNoteSortType: 'by-date',
+	filteredNoteSortAttribute: '',
 	noteColorRules: [],
 	defaultNoteAccentColor: '',
 	weekStartDay: 'sunday',
@@ -236,6 +243,14 @@ export function normalizeSortOrder(value: string): SortOrder {
 	return value === 'descending' ? 'descending' : 'ascending';
 }
 
+export function normalizeFilteredNoteSortType(value: string): FilteredNoteSortType {
+	return value === 'by-attribute' ? 'by-attribute' : 'by-date';
+}
+
+export function normalizeFilteredNoteSortAttribute(value: string): string {
+	return value.trim();
+}
+
 export function normalizeLanguage(value: unknown): Language {
 	return value === 'en' ? 'en' : 'es';
 }
@@ -335,9 +350,20 @@ export class CalendarSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.noteSortBy)
 				.onChange(async (value) => {
 					this.plugin.settings.noteSortBy = normalizeNoteSortBy(value);
+					const isName = this.plugin.settings.noteSortBy === 'name';
+					// When sorting by name, by-attribute is the only valid filtered sort type
+					if (isName && this.plugin.settings.filteredNoteSortType !== 'by-attribute') {
+						this.plugin.settings.filteredNoteSortType = 'by-attribute';
+					}
 					await this.plugin.saveSettings();
 					this.plugin.refreshCalendarView();
 					this.setSectionVisibility(noteDateSection, this.plugin.settings.noteSortBy === 'note-property');
+					this.setSectionVisibility(filteredSortTypeSection, !isName);
+					this.setSectionVisibility(
+						filteredSortAttributeSection,
+						this.plugin.settings.enableFilteredNoteSorting &&
+						(isName || this.plugin.settings.filteredNoteSortType === 'by-attribute'),
+					);
 				})
 			);
 
@@ -372,18 +398,74 @@ export class CalendarSettingTab extends PluginSettingTab {
 		this.setSectionVisibility(noteDateSection, this.plugin.settings.noteSortBy === 'note-property');
 
 		new Setting(containerEl)
-			.setName(t('settings_sort_order'))
-			.setDesc(t('settings_sort_order_desc'))
+			.setName(t('settings_enable_filtered_note_sorting'))
+			.setDesc(t('settings_enable_filtered_note_sorting_desc'))
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.enableFilteredNoteSorting)
+				.onChange(async (value) => {
+					this.plugin.settings.enableFilteredNoteSorting = value;
+					await this.plugin.saveSettings();
+					this.plugin.refreshCalendarView();
+					this.setSectionVisibility(filteredSortSection, value);
+				})
+			);
+
+		const filteredSortSection = containerEl.createDiv({ cls: 'calendar-settings-nested-section' });
+
+		new Setting(filteredSortSection)
+			.setName(t('settings_filtered_note_sort_order'))
+			.setDesc(t('settings_filtered_note_sort_order_desc'))
 			.addDropdown(dropdown => dropdown
 				.addOption('ascending', t('settings_sort_ascending'))
 				.addOption('descending', t('settings_sort_descending'))
-				.setValue(this.plugin.settings.noteSortOrder)
+				.setValue(this.plugin.settings.filteredNoteSortOrder)
 				.onChange(async (value) => {
-					this.plugin.settings.noteSortOrder = normalizeSortOrder(value);
+					this.plugin.settings.filteredNoteSortOrder = normalizeSortOrder(value);
 					await this.plugin.saveSettings();
 					this.plugin.refreshCalendarView();
 				})
 			);
+
+		const filteredSortTypeSection = filteredSortSection.createDiv({ cls: 'calendar-settings-nested-section' });
+
+		new Setting(filteredSortTypeSection)
+			.setName(t('settings_filtered_note_sort_type'))
+			.setDesc(t('settings_filtered_note_sort_type_desc'))
+			.addDropdown(dropdown => dropdown
+				.addOption('by-date', t('settings_filtered_note_sort_by_date'))
+				.addOption('by-attribute', t('settings_filtered_note_sort_by_attribute'))
+				.setValue(this.plugin.settings.filteredNoteSortType)
+				.onChange(async (value) => {
+					this.plugin.settings.filteredNoteSortType = normalizeFilteredNoteSortType(value);
+					await this.plugin.saveSettings();
+					this.plugin.refreshCalendarView();
+					this.setSectionVisibility(filteredSortAttributeSection, this.plugin.settings.filteredNoteSortType === 'by-attribute');
+				})
+			);
+
+		const filteredSortAttributeSection = filteredSortSection.createDiv({ cls: 'calendar-settings-nested-section' });
+
+		new Setting(filteredSortAttributeSection)
+			.setName(t('settings_filtered_note_sort_attribute'))
+			.setDesc(t('settings_filtered_note_sort_attribute_desc'))
+			.addText(text => text
+				.setPlaceholder(t('settings_filtered_note_sort_attribute_placeholder'))
+				.setValue(this.plugin.settings.filteredNoteSortAttribute)
+				.onChange(async (value) => {
+					this.plugin.settings.filteredNoteSortAttribute = normalizeFilteredNoteSortAttribute(value);
+					await this.plugin.saveSettings();
+					this.plugin.refreshCalendarView();
+				})
+			);
+
+		const isNameSort = this.plugin.settings.noteSortBy === 'name';
+		this.setSectionVisibility(filteredSortSection, this.plugin.settings.enableFilteredNoteSorting);
+		this.setSectionVisibility(filteredSortTypeSection, !isNameSort);
+		this.setSectionVisibility(
+			filteredSortAttributeSection,
+			this.plugin.settings.enableFilteredNoteSorting &&
+			(isNameSort || this.plugin.settings.filteredNoteSortType === 'by-attribute'),
+		);
 
 		new Setting(containerEl)
 			.setName(t('settings_show_time'))

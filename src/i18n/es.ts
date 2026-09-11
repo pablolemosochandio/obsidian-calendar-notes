@@ -47,8 +47,6 @@ export const es = {
 	settings_note_date_format: 'Formato de fecha de la nota',
 	settings_example: 'Ejemplo:',
 	settings_preview: 'Vista previa:',
-	settings_sort_order: 'Orden de clasificación',
-	settings_sort_order_desc: 'Elige si las notas se muestran de forma ascendente o descendente.',
 	settings_sort_ascending: 'Ascendente',
 	settings_sort_descending: 'Descendente',
 	settings_show_time: 'Mostrar hora de creación',
@@ -103,4 +101,17 @@ export const es = {
 	settings_language_desc: 'Idioma de visualización de la interfaz del complemento. Las etiquetas de comandos y de la cinta se actualizan al recargar el complemento.',
 	language_en: 'English',
 	language_es: 'Español',
+
+	// Filtered notes sorting
+	settings_enable_filtered_note_sorting: 'Habilitar ordenación de notas filtradas',
+	settings_enable_filtered_note_sorting_desc: 'Cuando se habilita, las notas filtradas se ordenan usando las opciones avanzadas siguientes.',
+	settings_filtered_note_sort_order: 'Orden (notas filtradas)',
+	settings_filtered_note_sort_order_desc: 'Elige si las notas filtradas se ordenan de forma ascendente o descendente.',
+	settings_filtered_note_sort_type: 'Tipo de ordenación',
+	settings_filtered_note_sort_type_desc: 'Elige cómo se ordenan las notas filtradas.',
+	settings_filtered_note_sort_by_date: 'Por fecha',
+	settings_filtered_note_sort_by_attribute: 'Por atributo',
+	settings_filtered_note_sort_attribute: 'Atributo de ordenación',
+	settings_filtered_note_sort_attribute_desc: 'Introduce el nombre de la propiedad de frontmatter por la que ordenar.',
+	settings_filtered_note_sort_attribute_placeholder: 'nombre de propiedad',
 } satisfies TranslationShape;

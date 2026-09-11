@@ -759,25 +759,173 @@ export class CalendarView extends ItemView {
 	}
 
 	private sortNotes(notes: TFile[]): TFile[] {
-		const direction = this.plugin.settings.noteSortOrder === 'ascending' ? 1 : -1;
 		const settings = this.plugin.settings;
+
+		// Advanced filtered note sorting takes priority when enabled
+		if (settings.enableFilteredNoteSorting) {
+			return this.sortNotesFiltered(notes);
+		}
+
 		return notes.sort((left, right) => {
 			if (settings.noteSortBy === 'creation-time' || settings.noteSortBy === 'note-property') {
 				const timeDifference =
 					resolveNoteDate(left, this.app, settings).date.getTime()
 					- resolveNoteDate(right, this.app, settings).date.getTime();
 				if (timeDifference !== 0) {
-					return timeDifference * direction;
+					return timeDifference;
 				}
 			}
 
 			const nameDifference = left.basename.localeCompare(right.basename);
 			if (nameDifference !== 0) {
-				return nameDifference * direction;
+				return nameDifference;
 			}
 
+			return left.stat.ctime - right.stat.ctime;
+		});
+	}
+
+	/**
+	 * Advanced sorting for filtered notes. Uses the configured sort type
+	 * (by-date or by-attribute) and sort order.
+	 * When noteSortBy is 'name', only by-attribute sorting is valid.
+	 */
+	private sortNotesFiltered(notes: TFile[]): TFile[] {
+		const settings = this.plugin.settings;
+		const direction = settings.filteredNoteSortOrder === 'ascending' ? 1 : -1;
+
+		// When sorting by name, attribute-based sorting is the only valid type
+		const effectiveSortType = settings.noteSortBy === 'name' ? 'by-attribute' : settings.filteredNoteSortType;
+
+		if (effectiveSortType === 'by-attribute') {
+			return this.sortNotesByAttribute(notes, settings.filteredNoteSortAttribute, direction);
+		}
+
+		// Default: sort by date (with time)
+		return this.sortNotesByDateWithTime(notes, direction);
+	}
+
+	/**
+	 * Sorts notes by date including hour and minute. Uses the configured note
+	 * date property to extract time if available; otherwise falls back to the
+	 * file creation time for the time portion.
+	 */
+	private sortNotesByDateWithTime(notes: TFile[], direction: number): TFile[] {
+		return notes.sort((left, right) => {
+			const leftTime = this.resolveNoteDateTime(left).getTime();
+			const rightTime = this.resolveNoteDateTime(right).getTime();
+			const timeDifference = leftTime - rightTime;
+			if (timeDifference !== 0) {
+				return timeDifference * direction;
+			}
 			return (left.stat.ctime - right.stat.ctime) * direction;
 		});
+	}
+
+	/**
+	 * Resolves the date+time for a note used by filtered sorting.
+	 * - If a note date property is configured and parses successfully:
+	 *   - If the format includes time tokens, uses the parsed hour/minute/second.
+	 *   - Otherwise, uses the property's date with the file creation time's hour/minute/second.
+	 * - Falls back to the file creation time.
+	 */
+	private resolveNoteDateTime(note: TFile): Date {
+		const settings = this.plugin.settings;
+		const propertyName = settings.noteDateProperty.trim();
+
+		if (propertyName) {
+			const frontmatter = this.app.metadataCache.getFileCache(note)?.frontmatter;
+			if (frontmatter) {
+				// Case-insensitive key lookup — consistent with getNoteAttributeValue
+				// and resolveNoteDate, so that 'fecha', 'Fecha', 'FECHA' all match.
+				const matchedKey = Object.keys(frontmatter).find(
+					(k) => k.toLowerCase() === propertyName.toLowerCase()
+				);
+				const value = matchedKey ? frontmatter[matchedKey] : undefined;
+				if (typeof value === 'string') {
+					const parsed = moment(value.trim(), settings.noteDatePropertyFormat, true);
+					if (parsed.isValid()) {
+						const formatHasTime = /[HhmsS]/.test(settings.noteDatePropertyFormat);
+						if (formatHasTime) {
+							return new Date(
+								parsed.year(), parsed.month(), parsed.date(),
+								parsed.hour(), parsed.minute(), parsed.second()
+							);
+						}
+						// Property has date only; use ctime for the time portion
+						const ctime = new Date(note.stat.ctime);
+						return new Date(
+							parsed.year(), parsed.month(), parsed.date(),
+							ctime.getHours(), ctime.getMinutes(), ctime.getSeconds()
+						);
+					}
+				}
+			}
+		}
+
+		return new Date(note.stat.ctime);
+	}
+
+	/**
+	 * Sorts notes by a frontmatter attribute value. Numbers sort numerically;
+	 * strings sort alphabetically (case-insensitive). Missing values sort last.
+	 */
+	private sortNotesByAttribute(notes: TFile[], attribute: string, direction: number): TFile[] {
+		if (!attribute) {
+			return notes;
+		}
+
+		return notes.sort((left, right) => {
+			const leftAttr = this.getNoteAttributeValue(left, attribute);
+			const rightAttr = this.getNoteAttributeValue(right, attribute);
+
+			// Missing values sort last regardless of direction
+			if (leftAttr.type === 'missing' && rightAttr.type === 'missing') return 0;
+			if (leftAttr.type === 'missing') return 1;
+			if (rightAttr.type === 'missing') return -1;
+
+			// Both numeric
+			if (leftAttr.type === 'number' && rightAttr.type === 'number') {
+				const diff = (leftAttr.value as number) - (rightAttr.value as number);
+				return diff * direction;
+			}
+
+			// Both text (or mixed — fall back to text comparison)
+			const leftStr = String(leftAttr.value).toLowerCase();
+			const rightStr = String(rightAttr.value).toLowerCase();
+			return leftStr.localeCompare(rightStr) * direction;
+		});
+	}
+
+	/**
+	 * Reads a frontmatter attribute value and determines its type.
+	 * Case-insensitive key lookup. Numbers (native or parseable) are typed
+	 * as 'number'; strings as 'text'; missing/unreadable as 'missing'.
+	 */
+	private getNoteAttributeValue(note: TFile, attribute: string): { type: 'number' | 'text' | 'missing'; value: number | string } {
+		const frontmatter = this.app.metadataCache.getFileCache(note)?.frontmatter;
+		if (!frontmatter) {
+			return { type: 'missing', value: '' };
+		}
+
+		const key = Object.keys(frontmatter).find(k => k.toLowerCase() === attribute.toLowerCase());
+		if (!key) {
+			return { type: 'missing', value: '' };
+		}
+
+		const value = frontmatter[key];
+		if (typeof value === 'number') {
+			return { type: 'number', value };
+		}
+		if (typeof value === 'string') {
+			const trimmed = value.trim();
+			const num = parseFloat(trimmed);
+			if (!isNaN(num) && String(num) === trimmed) {
+				return { type: 'number', value: num };
+			}
+			return { type: 'text', value: trimmed };
+		}
+		return { type: 'missing', value: '' };
 	}
 
 	private buildNoteCountMap(year: number, month: number): Map<number, number> {
