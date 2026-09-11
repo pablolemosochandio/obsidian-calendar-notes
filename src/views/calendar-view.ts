@@ -640,15 +640,16 @@ export class CalendarView extends ItemView {
 				void this.app.workspace.getLeaf(false).openFile(note);
 			};
 
-			// Creation time
+			// Time row — follows the active note filter:
+			//   note-property → use the property's date+time (ctime fallback when the format has no time tokens)
+			//   name/creation-time → use the file's ctime
 			if (this.plugin.settings.showTime) {
-				const resolved = resolveNoteDate(note, this.app, this.plugin.settings);
 				const timeEl = noteItem.createDiv('calendar-note-time');
-				timeEl.setText(
-					resolved.fromProperty
-						? formatDateTime(resolved.date, 'YYYY-MM-DD')
-						: formatDateTime(resolved.date, this.plugin.settings.timeIsoDisplay)
-				);
+				const settings = this.plugin.settings;
+				const displayDate = settings.noteSortBy === 'note-property'
+					? this.resolveNoteDateTime(note)
+					: new Date(note.stat.ctime);
+				timeEl.setText(formatDateTime(displayDate, settings.timeIsoDisplay));
 			}
 
 			// Note name text (row click opens the note)
@@ -843,9 +844,21 @@ export class CalendarView extends ItemView {
 				);
 				const value = matchedKey ? frontmatter[matchedKey] : undefined;
 				if (typeof value === 'string') {
-					const parsed = moment(value.trim(), settings.noteDatePropertyFormat, true);
+					const trimmed = value.trim();
+					
+					// Try ISO 8601 first (Obsidian's native date format)
+					let parsed = moment(trimmed, moment.ISO_8601, true);
+					let formatUsed = 'ISO_8601';
+					
+					// Fall back to configured format if ISO fails
+					if (!parsed.isValid()) {
+						parsed = moment(trimmed, settings.noteDatePropertyFormat, true);
+						formatUsed = settings.noteDatePropertyFormat;
+					}
+					
 					if (parsed.isValid()) {
-						const formatHasTime = /[HhmsS]/.test(settings.noteDatePropertyFormat);
+						// Check if the format used has time tokens
+						const formatHasTime = formatUsed === 'ISO_8601' || /[HhmsS]/.test(settings.noteDatePropertyFormat);
 						if (formatHasTime) {
 							return new Date(
 								parsed.year(), parsed.month(), parsed.date(),
