@@ -27,15 +27,33 @@ export function resolveNoteDate(file: TFile, app: App, settings: CalendarPluginS
 	const sourceActive = settings.noteSortBy === 'note-property' && propertyName !== '';
 
 	if (sourceActive) {
-		const value = app.metadataCache.getFileCache(file)?.frontmatter?.[propertyName];
-		if (typeof value === 'string') {
-			const parsed = moment(value.trim(), settings.noteDatePropertyFormat, true);
-			if (parsed.isValid()) {
-				// Date components only; local midday mirrors getDailyNoteTimestamp to avoid DST edge cases.
-				return {
-					date: new Date(parsed.year(), parsed.month(), parsed.date(), 12, 0, 0),
-					fromProperty: true,
-				};
+		const frontmatter = app.metadataCache.getFileCache(file)?.frontmatter;
+		if (frontmatter) {
+			// Case-insensitive key lookup — consistent with resolveNoteDateTime,
+			// getNoteAttributeValue, and matchesFrontmatterValue
+			const matchedKey = Object.keys(frontmatter).find(
+				(k) => k.toLowerCase() === propertyName.toLowerCase()
+			);
+			const value = matchedKey ? frontmatter[matchedKey] : undefined;
+
+			if (typeof value === 'string') {
+				const trimmed = value.trim();
+
+				// Try ISO 8601 first (Obsidian's native date format)
+				let parsed = moment(trimmed, moment.ISO_8601, true);
+
+				// Fall back to configured format if ISO fails
+				if (!parsed.isValid()) {
+					parsed = moment(trimmed, settings.noteDatePropertyFormat, true);
+				}
+
+				if (parsed.isValid()) {
+					// Date components only; local midday mirrors getDailyNoteTimestamp to avoid DST edge cases.
+					return {
+						date: new Date(parsed.year(), parsed.month(), parsed.date(), 12, 0, 0),
+						fromProperty: true,
+					};
+				}
 			}
 		}
 	}
