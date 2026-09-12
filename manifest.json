@@ -1,7 +1,7 @@
 {
   "id": "calendar-notes",
   "name": "Calendar Notes",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "minAppVersion": "1.0.0",
   "description": "Displays a sidebar calendar and notes created on the selected date or week, with iPad trackpad support.",
   "author": "Pablo Lemos",
